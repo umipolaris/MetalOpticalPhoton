@@ -1,0 +1,30 @@
+includeFile = dispersion_base.txt
+sv:Ph/Optical/Modules = 2 "g4em-standard_opt4" "g4optical"
+i:Ts/NumberOfThreads = 20
+
+# beam x=10, z=-75
+d:Ge/BeamPos/TransX = 10 mm
+d:Ge/BeamPos/TransZ = -75 mm
+
+# Shrink ScorePlane Z (cover plot extent, make 0.125mm binning practical)
+# Z range -125~225 (350mm), X range -300~100 (400mm)
+d:Ge/ScorePlane/HLZ = 175 mm
+d:Ge/ScorePlane/TransZ = 50 mm
+
+s:So/Beam/BeamEnergySpectrumType = "Continuous"
+dv:So/Beam/BeamEnergySpectrumValues  = 2 1.65 3.10 eV
+uv:So/Beam/BeamEnergySpectrumWeights = 2 1.0 1.0
+d:So/Beam/BeamEnergy = 2.4 eV
+i:So/Beam/NumberOfHistoriesInRun = 5000000
+
+# Fluence 0.125mm voxel — X 400mm/3200, Z 350mm/2800 (wavelength integrated)
+s:Sc/Prof/Quantity = "Fluence"
+s:Sc/Prof/Component = "ScorePlane"
+sv:Sc/Prof/OnlyIncludeParticlesNamed = 1 "opticalphoton"
+i:Sc/Prof/XBins = 3200
+i:Sc/Prof/YBins = 1
+i:Sc/Prof/ZBins = 2800
+s:Sc/Prof/OutputType = "csv"
+s:Sc/Prof/OutputFile = "../results/disp_prof_CPU"
+s:Sc/Prof/IfOutputFileAlreadyExists = "Overwrite"
+b:Sc/Prof/OutputToConsole = "False"

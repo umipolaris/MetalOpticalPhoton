@@ -1,0 +1,92 @@
+# Build artifacts
+build/
+build_shaders/
+*.o
+*.d
+*.dylib
+*.metallib
+*.air
+
+# IDE
+.vscode/
+.idea/
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+DerivedData/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+/tmp/
+
+# Test output — public 배포본은 scratch(test_run) 를 포함하지 않음
+test_run/
+
+
+# Backup files
+*.backup
+*.fix*_backup
+*.REMOVED_*
+*~
+\#*\#
+
+# Compiled test binaries
+test/test_parser
+test/test_ref
+
+# Paper generated artifacts
+article/runs/tier2_endtoend/built/
+article/runs/tier2_endtoend/simple_biconvex_lens_new.stl
+article/runs/tier3_lenses/*.stl
+article/data/tier2_endtoend/*.npy
+article/data/tier2_endtoend/smoke/
+
+# Tier 3 generated outputs
+article/runs/tier3_lenses/built/
+article/runs/unit_tests/built/
+article/runs/tier3_lenses/*.stl
+article/data/tier3_lenses/smoke/SensorDepth_*.csv
+
+
+# LaTeX build artifacts
+article/manuscript/main.aux
+article/manuscript/main.log
+article/manuscript/main.out
+article/manuscript/main.toc
+article/manuscript/*.bbl
+article/manuscript/*.blg
+article/manuscript/*.fls
+article/manuscript/*.fdb_latexmk
+article/manuscript/main.pdf
+article/manuscript/main.docx
+article/manuscript/~$*.docx
+
+.claude/
+
+# benchmark 02: run 스크립트가 만드는 편의 심링크 (common→../common; 공유 shell 의
+# ../../common/ 상대 include 가 results/built cwd 에서 풀리게 함). 산출물 아님.
+benchmark/02_reflection_refraction_tir/common
+
+# Large 1B run outputs (regenerable from .txt + plot script)
+examples/torus_diffuse_1B_*.csv
+examples/torus_diffuse_1B_*.log
+# WLS example 의 큰 fluence CSV (regenerable, ~224MB)
+examples/09_wls/results/*.csv
+
+# Large result files (over 100MB)
+benchmark/08_dispersion_prism/results/disp_phsp_*.phsp.csv
+benchmark/08_dispersion_prism/results/disp_spec_*.phsp
+
+benchmark/08_dispersion_prism/results/disp_prof_*.csv
+benchmark/08_dispersion_prism/results/disp_xze_*.csv
+
+# benchmark 09 SMF-28 large GPU output (227MB, regenerable from .txt + plot)
+benchmark/09_wls/results/wls_smf28_vis_GPU.csv
+# test_run/09_wls archived WIP — large phsp/csv 결과 (43GB)
+test_run/09_wls/results/
+benchmark/08_dispersion_prism/results/cascade_*.csv
+benchmark/08_dispersion_prism/results/single_prism_*.csv

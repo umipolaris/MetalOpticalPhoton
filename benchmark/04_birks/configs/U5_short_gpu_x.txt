@@ -1,0 +1,57 @@
+# U5 GPU run #3 — X slab scorer 100×1×1 (single-scorer rule)
+includeFile = ../../common/unit_test_shell.txt
+sv:Ph/Optical/Modules = 2 "g4em-standard_opt4" "gpuoptical"
+i:Ts/NumberOfThreads = 20
+i:Ph/Default/GPUOptical/LogLevel = 0
+
+d:Ge/World/HLZ  = 20 cm
+
+s:Ge/Sci/Parent   = "World"
+s:Ge/Sci/Type     = "TsBox"
+s:Ge/Sci/Material = "Buapfcfm"
+d:Ge/Sci/HLX      = 25 mm
+d:Ge/Sci/HLY      = 25 mm
+d:Ge/Sci/HLZ      = 75 mm
+d:Ge/Sci/TransZ   = 0 mm
+s:Ge/Sci/Color    = "lime"
+
+s:Ge/ScoreBox_X/Parent = "World"
+s:Ge/ScoreBox_X/Type   = "TsBox"
+b:Ge/ScoreBox_X/IsParallel = "True"
+d:Ge/ScoreBox_X/HLX = 25 mm
+d:Ge/ScoreBox_X/HLY = 1 mm
+d:Ge/ScoreBox_X/HLZ = 1 mm
+d:Ge/ScoreBox_X/TransZ = -20 mm   # panel(c) at plateau z=-20
+
+s:So/Beam/Type                     = "Beam"
+s:So/Beam/Component                = "BeamPos"
+s:So/Beam/BeamParticle             = "proton"
+d:So/Beam/BeamEnergy               = 100.0 MeV
+u:So/Beam/BeamEnergySpread         = 0.0
+s:So/Beam/BeamPositionDistribution = "Gaussian"
+s:So/Beam/BeamPositionCutoffShape  = "Ellipse"
+d:So/Beam/BeamPositionSpreadX      = 1.0 mm
+d:So/Beam/BeamPositionSpreadY      = 1.0 mm
+d:So/Beam/BeamPositionCutoffX      = 5.0 mm
+d:So/Beam/BeamPositionCutoffY      = 5.0 mm
+s:So/Beam/BeamAngularDistribution  = "None"
+i:So/Beam/NumberOfHistoriesInRun   = 20000
+
+s:Ge/BeamPos/Parent = "World"
+s:Ge/BeamPos/Type   = "Group"
+d:Ge/BeamPos/TransX = 0 mm
+d:Ge/BeamPos/TransY = 0 mm
+d:Ge/BeamPos/TransZ = -100 mm
+
+i:Ts/Seed = 42
+
+s:Sc/U5short_Fluence_X/Quantity                       = "GPUOpticalPhotonFluence"
+s:Sc/U5short_Fluence_X/Component                      = "ScoreBox_X"
+i:Sc/U5short_Fluence_X/XBins = 500
+i:Sc/U5short_Fluence_X/YBins = 1
+i:Sc/U5short_Fluence_X/ZBins = 1
+sv:Sc/U5short_Fluence_X/OnlyIncludeParticlesNamed     = 1 "opticalphoton"
+b:Sc/U5short_Fluence_X/OutputToConsole                = "False"
+s:Sc/U5short_Fluence_X/OutputType                     = "csv"
+s:Sc/U5short_Fluence_X/OutputFile                     = "../results/U5short_GPU_fluence_x"
+s:Sc/U5short_Fluence_X/IfOutputFileAlreadyExists      = "Overwrite"

@@ -1,0 +1,120 @@
+# 08 dispersion_prism — n(λ) wavelength dispersion of a BK7 prism (G4SPolyhedra N=3)
+s:Ph/ListName     = "Optical"
+s:Ph/Optical/Type = "Geant4_Modular"
+
+sv:Ma/BK7/Components = 1 "Silicon"
+uv:Ma/BK7/Fractions  = 1 1.0
+d:Ma/BK7/Density     = 2.51 g/cm3
+b:Ma/BK7/EnableOpticalProperties = "True"
+dv:Ma/BK7/RIndex/Energies = 11 1.5 1.8 2.0 2.2 2.5 2.8 3.0 3.2 3.5 4.0 5.0 eV
+uv:Ma/BK7/RIndex/Values   = 11 1.510 1.512 1.514 1.516 1.519 1.523 1.526 1.530 1.536 1.550 1.578
+
+# Flint glass SF1 (light flint, dense flint) — n=1.60-1.68 spectral, Δn~0.08 (1.2× stronger than BK7)
+# 60° apex prism min-dev ~48.2° at n=1.62 → 3 prism cumulative ~145° (backward cascade)
+# Dispersion 3-prism ~23° angular (12× BK7, cascade similar to the user's figure + very strong spectral splitting)
+sv:Ma/SF1/Components = 1 "Silicon"
+uv:Ma/SF1/Fractions  = 1 1.0
+d:Ma/SF1/Density     = 3.85 g/cm3
+b:Ma/SF1/EnableOpticalProperties = "True"
+dv:Ma/SF1/RIndex/Energies = 11 1.5 1.8 2.0 2.2 2.5 2.8 3.0 3.2 3.5 4.0 5.0 eV
+uv:Ma/SF1/RIndex/Values   = 11 1.600 1.610 1.615 1.620 1.629 1.640 1.648 1.656 1.668 1.690 1.730
+dv:Ma/SF1/AbsLength/Energies = 2 1.5 5.0 eV
+dv:Ma/SF1/AbsLength/Values   = 2 1e6 1e6 cm
+dv:Ma/BK7/AbsLength/Energies = 2 1.5 5.0 eV
+dv:Ma/BK7/AbsLength/Values   = 2 1e6 1e6 cm
+
+sv:Ma/Air2/Components = 2 "Hydrogen" "Oxygen"
+uv:Ma/Air2/Fractions  = 2 0.2 0.8
+d:Ma/Air2/Density     = 0.001 g/cm3
+b:Ma/Air2/EnableOpticalProperties = "True"
+dv:Ma/Air2/RIndex/Energies = 2 1.5 5.0 eV
+uv:Ma/Air2/RIndex/Values   = 2 1.0 1.0
+dv:Ma/Air2/AbsLength/Energies = 2 1.5 5.0 eV
+dv:Ma/Air2/AbsLength/Values   = 2 1e6 1e6 cm
+
+s:Ge/World/Material = "Air2"
+s:Ge/World/Type     = "TsBox"
+d:Ge/World/HLX      = 1500 mm
+d:Ge/World/HLY      = 100 mm
+d:Ge/World/HLZ      = 1500 mm
+
+# Triangular prism — G4SPolyhedra N=3, apex axis along original Z, RotX=90° → axis=Y
+s:Ge/Prism/Parent   = "World"
+s:Ge/Prism/Type     = "G4SPolyhedra"
+s:Ge/Prism/Material = "SF1"
+i:Ge/Prism/NSides   = 3
+dv:Ge/Prism/Z       = 4 -25 -25 25 25 mm
+dv:Ge/Prism/R       = 4 0 40 40 0 mm
+d:Ge/Prism/PhiStart = 96 deg
+d:Ge/Prism/PhiTotal = 360 deg
+d:Ge/Prism/RotX     = 90 deg
+d:Ge/Prism/TransX   = 0 mm
+d:Ge/Prism/TransY   = 0 mm
+d:Ge/Prism/TransZ   = 0 mm
+
+s:Ge/ScorePlane/Parent = "World"
+s:Ge/ScorePlane/Type = "TsBox"
+d:Ge/ScorePlane/HLX = 200 mm
+d:Ge/ScorePlane/HLY = 100 mm
+d:Ge/ScorePlane/HLZ = 1000 mm
+d:Ge/ScorePlane/TransX = -100 mm
+d:Ge/ScorePlane/TransZ = 0 mm
+b:Ge/ScorePlane/IsParallel = "True"
+sv:Ph/Optical/LayeredMassGeometryWorlds = 1 "ScorePlane"
+
+s:So/Beam/Type        = "Beam"
+s:So/Beam/BeamParticle = "opticalphoton"
+s:So/Beam/Component    = "BeamPos"
+s:So/Beam/BeamPositionDistribution = "Flat"
+s:So/Beam/BeamPositionCutoffShape  = "Rectangle"
+d:So/Beam/BeamPositionCutoffX      = 1.0 mm
+d:So/Beam/BeamPositionCutoffY      = 0.001 mm
+s:So/Beam/BeamAngularDistribution  = "None"
+u:So/Beam/BeamEnergySpread = 0.0
+
+s:Ge/BeamPos/Parent = "World"
+s:Ge/BeamPos/Type   = "Group"
+d:Ge/BeamPos/TransX = 2 mm
+d:Ge/BeamPos/TransZ = -75 mm
+
+b:Ts/UseQt = "False"
+b:Ts/QuitIfManyHistoriesSeemAnomalous = "False"
+i:Ts/Seed = 42
+b:Gr/Enable = "False"
+
+# 2026-05-18: suppress verbose 'Begin processing' log during 10M run
+i:Ts/ShowHistoryCountAtInterval = 100000000
+i:Ts/RunVerbosity = 0
+i:Ts/EventVerbosity = 0
+i:Ts/TrackingVerbosity = 0
+b:Ts/PauseBeforeQuit = "False"
+
+
+# === Prism 2 (cascade #2) ===
+s:Ge/Prism2/Parent   = "World"
+s:Ge/Prism2/Type     = "G4SPolyhedra"
+s:Ge/Prism2/Material = "SF1"
+i:Ge/Prism2/NSides   = 3
+dv:Ge/Prism2/Z       = 4 -25 -25 25 25 mm
+dv:Ge/Prism2/R       = 4 0 40 40 0 mm
+d:Ge/Prism2/PhiStart = 47.8 deg
+d:Ge/Prism2/PhiTotal = 360 deg
+d:Ge/Prism2/RotX     = 90 deg
+d:Ge/Prism2/TransX   = -75 mm
+d:Ge/Prism2/TransY   = 0 mm
+d:Ge/Prism2/TransZ   = 67 mm
+
+
+# === Prism 3 (cascade #3) — PhiStart=1.5° for min-dev on outgoing beam from Prism 2 ===
+s:Ge/Prism3/Parent   = "World"
+s:Ge/Prism3/Type     = "G4SPolyhedra"
+s:Ge/Prism3/Material = "SF1"
+i:Ge/Prism3/NSides   = 3
+dv:Ge/Prism3/Z       = 4 -25 -25 25 25 mm
+dv:Ge/Prism3/R       = 4 0 40 40 0 mm
+d:Ge/Prism3/PhiStart = 359.6 deg
+d:Ge/Prism3/PhiTotal = 360 deg
+d:Ge/Prism3/RotX     = 90 deg
+d:Ge/Prism3/TransX   = -174 mm
+d:Ge/Prism3/TransY   = 0 mm
+d:Ge/Prism3/TransZ   = 56 mm

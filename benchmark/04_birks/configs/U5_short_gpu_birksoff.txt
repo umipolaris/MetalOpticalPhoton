@@ -1,0 +1,5 @@
+# U5 short geometry — Birks OFF (GPU)
+includeFile = U5_short_gpu.txt
+u:Ma/Buapfcfm/BirksConstant = 0.0
+s:Sc/U5short_Fluence/OutputFile = "../results/U5short_GPU_fluence_birksoff"
+s:Sc/U5short_Edep/OutputFile = "../results/U5short_GPU_edep_birksoff"

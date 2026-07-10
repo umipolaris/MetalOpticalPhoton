@@ -1,0 +1,31 @@
+# run.sh 가 만드는 임시 STL symlink (common/ 에서 가져옴)
+0*/configs/simple_biconvex_lens_new.stl
+# 데이터 CSV/header/phsp 는 regenerable — gitignore (스크립트로 재생성).
+#   현재 출력은 results/ (아래 벤치별 규칙). configs/ 규칙은 잔여 안전망(과거 출력 위치).
+0*/configs/*.csv
+0*/configs/*.header
+0*/configs/*.phsp
+# --- 결과물(CSV·빌드 config·PDF 그림)은 배포 제외 (2026-07-09 슬림화). ---
+# --- 각 벤치 run 스크립트로 전부 재생성. 추적되는 결과물은 intro 그림(fig_0*.png)·.gitkeep 뿐. ---
+01_speed/results/SensorDepth_*.csv
+01_speed/results/*.tsv
+01_speed/results/plasticdose_*.png
+03_rayleigh/results/U3v1side_*.csv
+03_rayleigh/results/rayleigh_color_*.csv
+03_rayleigh/results/run_*.log
+04_birks/results/U5*.csv
+04_birks/results/.U5*
+05_torus/results/torus_diffuse_*.csv
+06_mie_diffusion_cyl/results/*.csv
+09_csi_wls_plate/results/*.csv
+02_reflection_refraction_tir/results/built/
+# 07·10 은 결과 서브폴더·다량 CSV 라 results/ 전체를 무시하고 최종 산출물만 추적
+07_cherenkov_water/results/*
+!07_cherenkov_water/results/fig_07_cherenkov_geometry_and_zfluence_cpu_gpu.png
+10_analytic_vs_mesh/results/*
+!10_analytic_vs_mesh/results/.gitkeep
+# 결과 그림의 PDF 판은 미배포 (그림은 PNG 만 추적)
+0*/results/*.pdf
+1*/results/*.pdf
+__pycache__/
+*.pyc

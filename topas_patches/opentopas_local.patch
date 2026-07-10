@@ -1,0 +1,233 @@
+diff --git a/geometry/TsBox.cc b/geometry/TsBox.cc
+index 6ca562b..87a65f1 100644
+--- a/geometry/TsBox.cc
++++ b/geometry/TsBox.cc
+@@ -41,6 +41,7 @@
+ #include "G4Step.hh"
+ #include "G4VTouchable.hh"
+ #include "G4GeometryTolerance.hh"
++#include "G4SystemOfUnits.hh"
+ 
+ TsBox::TsBox(TsParameterManager* pM, TsExtensionManager* eM, TsMaterialManager* mM, TsGeometryManager* gM,
+ 			 TsVGeometryComponent* parentComponent, G4VPhysicalVolume* parentVolume, G4String& name) :
+@@ -96,6 +97,20 @@ G4VPhysicalVolume* TsBox::Construct()
+ 	G4double totalHLY = fPm->GetDoubleParameter(GetFullParmName("HLY"),"Length");
+ 	G4double totalHLZ = fPm->GetDoubleParameter(GetFullParmName("HLZ"),"Length");
+ 
++	// MetalOpticalPhoton fix (2026-04-29): auto-shrink parallel-world TsBox
++	// envelope by 1 nm on each axis. Prevents coincident boundary with mass-world
++	// geometry that triggers G4Navigator stuck loop at near-grazing optical-photon
++	// TIR (root cause: G4PathFinder min-step coordination of mass + parallel
++	// navigators returns step=0 at coincident boundary). Setup E_v2 measurement
++	// confirmed CPU/GPU fluence ratio 0.245 -> 1.0007 with this offset applied.
++	// See docs/topas_cpu_optical_root_cause_summary.md.
++	if (IsParallel()) {
++		const G4double pwAutoShrink = 1.0 * CLHEP::nm;
++		totalHLX -= pwAutoShrink;
++		totalHLY -= pwAutoShrink;
++		totalHLZ -= pwAutoShrink;
++	}
++
+ 	if (totalHLX <= 0.) OutOfRange( GetFullParmName("HLX"), "must be larger than zero");
+ 	if (totalHLY <= 0.) OutOfRange( GetFullParmName("HLY"), "must be larger than zero");
+ 	if (totalHLZ <= 0.) OutOfRange( GetFullParmName("HLZ"), "must be larger than zero");
+diff --git a/geometry/TsCylinder.cc b/geometry/TsCylinder.cc
+index 650c65b..0be540d 100644
+--- a/geometry/TsCylinder.cc
++++ b/geometry/TsCylinder.cc
+@@ -112,6 +112,17 @@ G4VPhysicalVolume* TsCylinder::Construct()
+ 	else
+ 		totalDPhi = 360. * deg;
+ 
++	// MetalOpticalPhoton fix (2026-04-29): auto-shrink parallel-world TsCylinder
++	// envelope to avoid coincident boundary with mass-world. See TsBox.cc for
++	// full mechanism explanation.
++	if (IsParallel()) {
++		const G4double pwAutoShrink = 1.0 * CLHEP::nm;
++		totalRMax -= pwAutoShrink;
++		totalHL   -= pwAutoShrink;
++		// fTotalRMin stays at 0 typical; if non-zero, also shrink inward (expand inner)
++		if (fTotalRMin > pwAutoShrink) fTotalRMin += pwAutoShrink;
++	}
++
+ 	if (fTotalRMin < 0.       ) OutOfRange( GetFullParmName("RMin"), "can not be negative");
+ 	if (totalRMax < fTotalRMin) OutOfRange( GetFullParmName("RMax"), "can not be less than RMin");
+ 	if (totalHL <= 0.         ) OutOfRange( GetFullParmName("HL"), "must be larger than zero");
+diff --git a/geometry/TsSphere.cc b/geometry/TsSphere.cc
+index ec338f8..5e6d5ff 100644
+--- a/geometry/TsSphere.cc
++++ b/geometry/TsSphere.cc
+@@ -120,6 +120,15 @@ G4VPhysicalVolume* TsSphere::Construct()
+ 	else
+ 		totalDTheta = 180. * deg;
+ 
++	// MetalOpticalPhoton fix (2026-04-29): auto-shrink parallel-world TsSphere
++	// envelope to avoid coincident boundary with mass-world. See TsBox.cc for
++	// full mechanism explanation.
++	if (IsParallel()) {
++		const G4double pwAutoShrink = 1.0 * CLHEP::nm;
++		totalRMax -= pwAutoShrink;
++		if (fTotalRMin > pwAutoShrink) fTotalRMin += pwAutoShrink;
++	}
++
+ 	if (fTotalRMin < 0.          ) OutOfRange( GetFullParmName("RMin"), "can not be negative");
+ 	if (totalRMax < fTotalRMin   ) OutOfRange( GetFullParmName("RMax"), "can not be less than RMin");
+ 	if (totalSPhi < 0.           ) OutOfRange( GetFullParmName("SPhi"), "can not be negative");
+@@ -194,25 +203,65 @@ G4int TsSphere::GetIndex(G4Step* aStep) {
+ 	if (fDivisionCounts[0] * fDivisionCounts[1] * fDivisionCounts[2] == 1) {
+ 		return 0;
+ 	} else {
++		// ============================================================
++		// 2026-05-16 BUG FIX: G4ParameterisedNavigation::LevelLocate 의 nested
++		// concentric R-divisions wrong copyNo bug 회피.
++		// (TOPAS 3.6.0 의 TsCylinder Rho/Phi fix 와 same family bug —
++		// sphere 에는 fix 미반영. AABB voxelization 무력화 + 역순 candidate
++		// loop + ρ=0 degeneracy 가 wrong shell 잡음 → CPU TsScoreFluence 가
++		// wrong R bin 에 step length 누적 → axis-symmetric ray 시 even R bin
++		// path = 0, odd bin 만 알 수있는 systematic.)
++		//
++		// Fix: G4 navigator 의 replica number 무시. step PreStepPoint
++		// position 의 envelope-local (r, φ, θ) 직접 계산해서 정확한 bin
++		// index 반환. step path 누적은 navigator step 분할에 의존하나
++		// PreStep position 기반 bin assignment 만 fix 해도 다수 case 회복.
++		// ============================================================
+ 		const G4VTouchable* touchable = aStep->GetPreStepPoint()->GetTouchable();
+-
+-		if (IsParameterized() && !aStep->GetPreStepPoint()->GetTouchable()->GetVolume()->IsParameterised()) {
+-			fPm->GetSequenceManager()->NoteParameterizationError(aStep->GetTotalEnergyDeposit(),
+-																	 GetNameWithCopyId(),
+-																	 aStep->GetPreStepPoint()->GetTouchable()->GetVolume()->GetName());
+-			return -1;
++		G4ThreeVector worldPos = aStep->GetPreStepPoint()->GetPosition();
++		// PreStep 의 touchable history 상위 (envelope) transform 이용해 local 좌표.
++		// nested division 의 wrong copyNo 가 transform stack 에 영향 줄 수 있어
++		// envelope 직접 transform 사용 — touchable depth 의 outermost 가 envelope.
++		G4ThreeVector localPos = worldPos;
++		const G4NavigationHistory* hist = touchable->GetHistory();
++		if (hist && hist->GetDepth() > 0) {
++			// envelope = depth 1 (mother world 가 depth 0). depth-1 의 inverse transform
++			// 이 envelope-local 좌표.
++			localPos = hist->GetTransform(1).TransformPoint(worldPos);
+ 		}
+ 
+-		G4int index = touchable->GetReplicaNumber(0);
+-
+-		if (index < 0 || index >= fDivisionCounts[0] * fDivisionCounts[1] * fDivisionCounts[2]) {
+-			fPm->GetSequenceManager()->NoteIndexError(aStep->GetTotalEnergyDeposit(),
+-													  GetNameWithCopyId(), "", index,
+-													  fDivisionCounts[0] * fDivisionCounts[1] * fDivisionCounts[2] - 1);
+-			return -1;
++		G4double r     = localPos.mag();
++		G4double phi   = localPos.phi();
++		if (phi < 0) phi += CLHEP::twopi;
++		G4double theta = localPos.theta();
++
++		// envelope sphere 에서 SPhi 받음 (member 아님).
++		G4double sphereSPhi = 0.0;
++		if (fEnvelopePhys) {
++			const G4Sphere* envSph = dynamic_cast<const G4Sphere*>(
++				fEnvelopePhys->GetLogicalVolume()->GetSolid());
++			if (envSph) sphereSPhi = envSph->GetStartPhiAngle();
+ 		}
+ 
+-		return index;
++		G4double binR     = fFullWidths[0] / fDivisionCounts[0];
++		G4double binPhi   = fFullWidths[1] / fDivisionCounts[1];
++		G4double binTheta = fFullWidths[2] / fDivisionCounts[2];
++
++		G4int iR     = (G4int)((r - fTotalRMin) / binR);
++		G4int iPhi   = (binPhi > 0) ? (G4int)((phi - sphereSPhi)   / binPhi)   : 0;
++		G4int iTheta = (binTheta > 0) ? (G4int)((theta - fTotalSTheta) / binTheta) : 0;
++
++		// Clamp to valid range
++		if (iR < 0) iR = 0;
++		if (iR >= fDivisionCounts[0]) iR = fDivisionCounts[0] - 1;
++		if (iPhi < 0) iPhi = 0;
++		if (iPhi >= fDivisionCounts[1]) iPhi = fDivisionCounts[1] - 1;
++		if (iTheta < 0) iTheta = 0;
++		if (iTheta >= fDivisionCounts[2]) iTheta = fDivisionCounts[2] - 1;
++
++		return iR * fDivisionCounts[1] * fDivisionCounts[2]
++		     + iPhi * fDivisionCounts[2]
++		     + iTheta;
+ 	}
+ }
+ 
+diff --git a/primary/TsVGenerator.cc b/primary/TsVGenerator.cc
+index 9dce080..f7b1fc1 100644
+--- a/primary/TsVGenerator.cc
++++ b/primary/TsVGenerator.cc
+@@ -151,17 +151,19 @@ void TsVGenerator::ResolveParameters() {
+ 			if (spectrumType=="continuous") {
+ 				fSpectrumIsContinuous = true;
+ 
+-				// Add missing zero bins
+-				fSpectrumNBins++;
++				// 2026-05-19 fix: zero-bin prepend 제거.
++				// User Values=[E_min, E_max] 가 PDF support 의 정확한 lower/upper bound.
++				// 이전 동작: 0 eV 강제 prepend → 0~E_min 영역 triangular ramp (35% outlier)
++				// 수정 동작: user values 그대로 사용, sampling 범위 [E_min, E_max]
+ 				fSpectrumEnergies = new G4double[fSpectrumNBins];
+ 				fSpectrumWeights = new G4double[fSpectrumNBins];
+ 				fSpectrumWeightSums = new G4double[fSpectrumNBins];
+-				fSpectrumEnergies[0] = 0.;
+-				fSpectrumWeights[0] = 0.;
++				fSpectrumEnergies[0] = spectrumEnergies[0];
++				fSpectrumWeights[0] = spectrumWeights[0];
+ 				fSpectrumWeightSums[0] = 0.;
+ 				for (int i = 1; i < fSpectrumNBins; i++) {
+-					fSpectrumEnergies[i] = spectrumEnergies[i-1];
+-					fSpectrumWeights[i] = spectrumWeights[i-1];
++					fSpectrumEnergies[i] = spectrumEnergies[i];
++					fSpectrumWeights[i] = spectrumWeights[i];
+ 					fSpectrumWeightSums[i] = fSpectrumWeightSums[i-1] + 0.5 * (fSpectrumWeights[i] + fSpectrumWeights[i-1]) * (fSpectrumEnergies[i] - fSpectrumEnergies[i-1]);
+ 				}
+ 
+diff --git a/primary/TsVGenerator.cc b/primary/TsVGenerator.cc
+index 54d5e82..8d818df 100644
+--- a/primary/TsVGenerator.cc
++++ b/primary/TsVGenerator.cc
+@@ -412,29 +412,20 @@ void TsVGenerator::GenerateOnePrimary(G4Event*, TsPrimaryParticle p)
+ 
+ 		if ( p.isOpticalPhoton ) {
+ 			if ( fSetRandomPolarization ) {
+-				G4double tanTheta = 0.0;
+-				if (p.dCos3 != 0.0)
+-					tanTheta = sqrt(p.dCos1*p.dCos1 + p.dCos2*p.dCos2)/p.dCos3;
+-
+-				if (tanTheta == 0.0) {
+-					fPolX = 1.0;
+-					fPolY = 0.0;
+-					fPolZ = 0.0;
+-				} else {
+-					G4double polX = p.dCos1/tanTheta;
+-					G4double polY = p.dCos2/tanTheta;
+-					G4double polZ = -tanTheta;
+-					G4ThreeVector polarization(polX, polY, polZ);
+-					G4ThreeVector orthogonalVector = G4ThreeVector(p.dCos1,p.dCos2,p.dCos3).cross(polarization);
+-					G4double phi = CLHEP::twopi*G4UniformRand();
+-					G4double sinPhi = sin(phi);
+-					G4double cosPhi = cos(phi);
+-					polarization = cosPhi * polarization + sinPhi * orthogonalVector;
+-					polarization = polarization.unit();
+-					fPolX = polarization.x();
+-					fPolY = polarization.y();
+-					fPolY = polarization.z();
+-				}
++				// MetalOpticalPhoton patch (v4.2.3 port): upstream tanTheta==0 가드는 +z 빔에 고정편광
++				// (1,0,0), 일반 방향엔 polZ=-tanTheta(비-수직). Opticks식 cross-product 로 교체 →
++				// 모든 방향에서 random transverse 보장 (le422 와 동일 물리).
++				G4ThreeVector dir(p.dCos1, p.dCos2, p.dCos3);
++				G4ThreeVector axis = (std::abs(dir.x()) < 0.9)
++					     ? G4ThreeVector(1.0, 0.0, 0.0)
++					     : G4ThreeVector(0.0, 1.0, 0.0);
++				G4ThreeVector u = dir.cross(axis).unit();
++				G4ThreeVector v = dir.cross(u);
++				G4double phi = CLHEP::twopi * G4UniformRand();
++				G4ThreeVector polarization = std::cos(phi) * u + std::sin(phi) * v;
++				fPolX = polarization.x();
++				fPolY = polarization.y();
++				fPolZ = polarization.z();
+ 			}
+ 			
+ 			particle->SetPolarization(fPolX, fPolY, fPolZ);

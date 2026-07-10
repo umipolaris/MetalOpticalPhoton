@@ -1,0 +1,117 @@
+# U5 short geometry — Sci HLZ=75mm, ScoreBox same size (auto-shrink applied)
+# 100 MeV proton stops well inside this 150mm BC408 cube (range ~80mm)
+
+includeFile = ../../common/unit_test_shell.txt
+sv:Ph/Optical/Modules = 2 "g4em-standard_opt4" "g4optical"
+i:Ts/NumberOfThreads = 30  # 2026-05-15: user request, 30 threads (was 10)
+
+# Override world to fit shorter Sci
+d:Ge/World/HLZ  = 20 cm
+
+# Scintillator (BC408): z ∈ [-75, +75]
+s:Ge/Sci/Parent   = "World"
+s:Ge/Sci/Type     = "TsBox"
+s:Ge/Sci/Material = "Buapfcfm"
+d:Ge/Sci/HLX      = 25 mm
+d:Ge/Sci/HLY      = 25 mm
+d:Ge/Sci/HLZ      = 75 mm
+d:Ge/Sci/TransZ   = 0 mm
+s:Ge/Sci/Color    = "lime"
+
+# ScoreBox: SAME size as Sci (auto-shrink patch handles 1nm offset for PW)
+s:Ge/ScoreBox/Parent = "World"
+s:Ge/ScoreBox/Type   = "TsBox"
+b:Ge/ScoreBox/IsParallel = "True"
+d:Ge/ScoreBox/HLX = 25 mm
+d:Ge/ScoreBox/HLY = 25 mm
+d:Ge/ScoreBox/HLZ = 75 mm
+d:Ge/ScoreBox/TransZ = 0 mm
+
+# ScoreBox_Z: narrow axis tube  x∈[-1,1], y∈[-1,1], z∈[-75,75]  → dL/dz (panel b)
+s:Ge/ScoreBox_Z/Parent = "World"
+s:Ge/ScoreBox_Z/Type   = "TsBox"
+b:Ge/ScoreBox_Z/IsParallel = "True"
+d:Ge/ScoreBox_Z/HLX = 1 mm
+d:Ge/ScoreBox_Z/HLY = 1 mm
+d:Ge/ScoreBox_Z/HLZ = 75 mm
+d:Ge/ScoreBox_Z/TransZ = 0 mm
+
+# ScoreBox_X: thin z=0 slab  x∈[-25,25], y∈[-1,1], z∈[-1,1]  → lateral profile (panel c)
+s:Ge/ScoreBox_X/Parent = "World"
+s:Ge/ScoreBox_X/Type   = "TsBox"
+b:Ge/ScoreBox_X/IsParallel = "True"
+d:Ge/ScoreBox_X/HLX = 25 mm
+d:Ge/ScoreBox_X/HLY = 1 mm
+d:Ge/ScoreBox_X/HLZ = 1 mm
+d:Ge/ScoreBox_X/TransZ = 0 mm
+
+# Proton beam — entry at z = -75, energy 100 MeV
+s:So/Beam/Type                     = "Beam"
+s:So/Beam/Component                = "BeamPos"
+s:So/Beam/BeamParticle             = "proton"
+d:So/Beam/BeamEnergy               = 100.0 MeV
+u:So/Beam/BeamEnergySpread         = 0.0
+s:So/Beam/BeamPositionDistribution = "Gaussian"
+s:So/Beam/BeamPositionCutoffShape  = "Ellipse"
+d:So/Beam/BeamPositionSpreadX      = 1.0 mm
+d:So/Beam/BeamPositionSpreadY      = 1.0 mm
+d:So/Beam/BeamPositionCutoffX      = 5.0 mm
+d:So/Beam/BeamPositionCutoffY      = 5.0 mm
+s:So/Beam/BeamAngularDistribution  = "None"
+i:So/Beam/NumberOfHistoriesInRun   = 2500   # 2026-05-15: 25000→2500 (matches GPU, accounts for 4-scorer 4x slowdown)
+
+s:Ge/BeamPos/Parent = "World"
+s:Ge/BeamPos/Type   = "Group"
+d:Ge/BeamPos/TransX = 0 mm
+d:Ge/BeamPos/TransY = 0 mm
+d:Ge/BeamPos/TransZ = -100 mm
+
+i:Ts/Seed = 42
+
+# CPU side keeps 3 separate scorers (CPU is not subject to the single-scorer rule — driver-independent)
+# Optical photon fluence — original cube-full scorer kept for scan reuse
+s:Sc/U5short_Fluence/Quantity                       = "Fluence"
+s:Sc/U5short_Fluence/Component                      = "ScoreBox"
+i:Sc/U5short_Fluence/XBins = 100
+i:Sc/U5short_Fluence/YBins = 50
+i:Sc/U5short_Fluence/ZBins = 300
+sv:Sc/U5short_Fluence/OnlyIncludeParticlesNamed     = 1 "opticalphoton"
+b:Sc/U5short_Fluence/OutputToConsole                = "False"
+s:Sc/U5short_Fluence/OutputType                     = "csv"
+s:Sc/U5short_Fluence/OutputFile                     = "../results/U5short_CPU_fluence"
+s:Sc/U5short_Fluence/IfOutputFileAlreadyExists      = "Overwrite"
+
+# Z scorer: dL/dz on narrow axis tube  (1×1×300, panel b)
+s:Sc/U5short_Fluence_Z/Quantity                       = "Fluence"
+s:Sc/U5short_Fluence_Z/Component                      = "ScoreBox_Z"
+i:Sc/U5short_Fluence_Z/XBins = 1
+i:Sc/U5short_Fluence_Z/YBins = 1
+i:Sc/U5short_Fluence_Z/ZBins = 1500
+sv:Sc/U5short_Fluence_Z/OnlyIncludeParticlesNamed     = 1 "opticalphoton"
+b:Sc/U5short_Fluence_Z/OutputToConsole                = "False"
+s:Sc/U5short_Fluence_Z/OutputType                     = "csv"
+s:Sc/U5short_Fluence_Z/OutputFile                     = "../results/U5short_CPU_fluence_z"
+s:Sc/U5short_Fluence_Z/IfOutputFileAlreadyExists      = "Overwrite"
+
+# X scorer: lateral profile across z=0 slab  (100×1×1, panel c)
+s:Sc/U5short_Fluence_X/Quantity                       = "Fluence"
+s:Sc/U5short_Fluence_X/Component                      = "ScoreBox_X"
+i:Sc/U5short_Fluence_X/XBins = 500
+i:Sc/U5short_Fluence_X/YBins = 1
+i:Sc/U5short_Fluence_X/ZBins = 1
+sv:Sc/U5short_Fluence_X/OnlyIncludeParticlesNamed     = 1 "opticalphoton"
+b:Sc/U5short_Fluence_X/OutputToConsole                = "False"
+s:Sc/U5short_Fluence_X/OutputType                     = "csv"
+s:Sc/U5short_Fluence_X/OutputFile                     = "../results/U5short_CPU_fluence_x"
+s:Sc/U5short_Fluence_X/IfOutputFileAlreadyExists      = "Overwrite"
+
+# Energy deposit on mass-world Sci (proton dE/dz, fine binning for local Birks)
+s:Sc/U5short_Edep/Quantity  = "EnergyDeposit"
+s:Sc/U5short_Edep/Component = "Sci"
+i:Sc/U5short_Edep/XBins = 1
+i:Sc/U5short_Edep/YBins = 1
+i:Sc/U5short_Edep/ZBins = 200
+b:Sc/U5short_Edep/OutputToConsole           = "False"
+s:Sc/U5short_Edep/OutputType                = "csv"
+s:Sc/U5short_Edep/OutputFile                = "../results/U5short_CPU_edep"
+s:Sc/U5short_Edep/IfOutputFileAlreadyExists = "Overwrite"

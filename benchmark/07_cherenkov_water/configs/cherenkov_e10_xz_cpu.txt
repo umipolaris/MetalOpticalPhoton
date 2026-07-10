@@ -1,0 +1,77 @@
+# Cherenkov 07 panel (a) — proton beam injected 5 cm outside the water, x-z 2D fluence (GPU).
+# World=Air, Water box (20cm cube) at center, beam z=-150mm (50mm outside the water front face z=-100) -> +z.
+s:Ph/ListName     = "Optical"
+s:Ph/Optical/Type = "Geant4_Modular"
+sv:Ph/Optical/Modules = 2 "g4em-standard_opt4" "g4optical"
+i:Ts/NumberOfThreads = 20
+i:Ts/Seed = 42
+b:Ts/UseQt = "False"
+b:Gr/Enable = "False"
+b:Ts/QuitIfManyHistoriesSeemAnomalous = "False"
+i:Ts/ShowHistoryCountAtInterval = 1000000
+
+# Air (optical: n=1, no absorption)
+b:Ma/Air/EnableOpticalProperties = "True"
+dv:Ma/Air/RIndex/Energies = 2 1.5 5.0 eV
+uv:Ma/Air/RIndex/Values   = 2 1.0 1.0
+dv:Ma/Air/AbsLength/Energies = 2 1.5 5.0 eV
+dv:Ma/Air/AbsLength/Values   = 2 1e6 1e6 m
+
+# Water (n=1.333)
+sv:Ma/Water/Components           = 2 "Hydrogen" "Oxygen"
+uv:Ma/Water/Fractions            = 2 0.111894 0.888106
+d:Ma/Water/Density               = 1.0 g/cm3
+d:Ma/Water/MeanExcitationEnergy  = 75.0 eV
+b:Ma/Water/EnableOpticalProperties = "True"
+dv:Ma/Water/RIndex/Energies = 2 1.5 5.0 eV
+uv:Ma/Water/RIndex/Values   = 2 1.333 1.333
+# Realistic pure-water absorption (strong IR/UV absorption, blue ~50m transparent)
+# 40-point fine-tab (proper sampling of the steep absorption curve; avoids spline overshoot)
+dv:Ma/Water/AbsLength/Energies = 40 1.5000 1.5897 1.6795 1.7692 1.8590 1.9487 2.0385 2.1282 2.2179 2.3077 2.3974 2.4872 2.5769 2.6667 2.7564 2.8462 2.9359 3.0256 3.1154 3.2051 3.2949 3.3846 3.4744 3.5641 3.6538 3.7436 3.8333 3.9231 4.0128 4.1026 4.1923 4.2821 4.3718 4.4615 4.5513 4.6410 4.7308 4.8205 4.9103 5.0000 eV
+dv:Ma/Water/AbsLength/Values   = 40 3.000 6.856 15.670 35.813 81.850 187.065 355.553 528.526 785.648 1167.857 1736.006 2526.611 2884.152 3292.290 3758.182 4290.004 4897.083 4452.633 3880.394 3381.698 2947.093 2568.341 2238.266 1950.611 1699.925 1481.456 1291.064 1125.140 970.911 789.652 642.233 522.335 424.820 345.511 281.008 228.546 185.879 151.178 122.954 100.000 cm
+
+# World = Air
+s:Ge/World/Material = "Air"
+s:Ge/World/Type     = "TsBox"
+d:Ge/World/HLX = 110 mm
+d:Ge/World/HLY = 110 mm
+d:Ge/World/HLZ = 165 mm
+
+# Water box (20cm cube, z=-100..100)
+s:Ge/WaterBox/Parent   = "World"
+s:Ge/WaterBox/Type     = "TsBox"
+s:Ge/WaterBox/Material = "Water"
+d:Ge/WaterBox/HLX = 100 mm
+d:Ge/WaterBox/HLY = 100 mm
+d:Ge/WaterBox/HLZ = 100 mm
+
+# beam — proton 200MeV, 5cm outside the water (z=-150) -> +z
+s:So/Beam/Type = "Beam"
+s:So/Beam/Component = "BeamPos"
+s:So/Beam/BeamParticle = "e-"
+d:So/Beam/BeamEnergy = 10.0 MeV
+u:So/Beam/BeamEnergySpread = 0.0
+s:So/Beam/BeamPositionDistribution = "None"
+s:So/Beam/BeamAngularDistribution  = "None"
+i:So/Beam/NumberOfHistoriesInRun = 10000
+s:Ge/BeamPos/Parent = "World"
+s:Ge/BeamPos/Type   = "Group"
+d:Ge/BeamPos/TransZ = -150 mm
+
+# x-z 2D fluence scorer (parallel, integrated over y)
+s:Ge/ScoreBox/Parent = "World"
+s:Ge/ScoreBox/Type = "TsBox"
+b:Ge/ScoreBox/IsParallel = "True"
+d:Ge/ScoreBox/HLX = 110 mm
+d:Ge/ScoreBox/HLY = 110 mm
+d:Ge/ScoreBox/HLZ = 165 mm
+sv:Ph/Optical/LayeredMassGeometryWorlds = 1 "ScoreBox"
+s:Sc/XZ/Quantity = "Fluence"
+s:Sc/XZ/Component = "ScoreBox"
+sv:Sc/XZ/OnlyIncludeParticlesNamed = 1 "opticalphoton"
+i:Sc/XZ/XBins = 60
+i:Sc/XZ/YBins = 1
+i:Sc/XZ/ZBins = 130
+s:Sc/XZ/OutputType = "csv"
+s:Sc/XZ/OutputFile = "../results/e10_xz_CPU"
+s:Sc/XZ/IfOutputFileAlreadyExists = "Overwrite"

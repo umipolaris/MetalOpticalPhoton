@@ -1,0 +1,545 @@
+############################################
+# 1. World definition (adjust size as needed)
+############################################
+includeFile = ../../common/OpticalMaterialSample.txt
+
+
+############################################
+# 2. STL CAD component
+############################################
+sv:Ma/BK7/Components                = 5 "Oxygen" "Silicon" "Boron" "Sodium" "Potassium"
+uv:Ma/BK7/Fractions                 = 5 0.539 0.333 0.040 0.070 0.018
+b:Ma/BK7/EnableOpticalProperties    = "True"
+d:Ma/BK7/Density                    = 2.51 g/cm3
+d:Ma/BK7/MeanExcitationEnergy       = 85.7 eV
+s:Ma/BK7/DefaultColor               = "yellow"
+dv:Ma/BK7/RIndex/Energies           = 4  1.77  2.25  2.76  3.10 eV
+uv:Ma/BK7/RIndex/Values             = 4  1.513 1.518 1.525 1.531
+#dv:Ma/BK7/RIndex/Energies           = 2  1.77 3.10 eV
+#uv:Ma/BK7/RIndex/Values             = 2  1.5 1.5
+dv:Ma/BK7/AbsLength/Energies        = 3 1.77  2.07  2.48 eV
+dv:Ma/BK7/AbsLength/Values          = 3 50  50  50 cm   # [mm] e.g. 100 m
+
+b:Ge/CheckForOverlaps = "True"
+#b:Ge/CheckForOverlaps = "False"
+
+s:Ge/MySTL/Parent     = "World"   # parent volume
+s:Ge/MySTL/Type       = "TsCAD"   # CAD-only component
+s:Ge/MySTL/FileFormat = "stl"     # file format
+s:Ge/MySTL/InputFile  = "simple_biconvex_lens_new" # filename only, without extension
+d:Ge/MySTL/Units      = 1.0 mm      # coordinate system inside the STL (e.g. mm→TOPAS)
+s:Ge/MySTL/Material   = "BK7"   # specify the desired material
+
+d:stlTrans            = 275 mm
+d:stlOffset           = 25.0 mm
+
+# Wrapping common
+d:WrapGap         = 0.1 mm          # distance between the Plastic surface and the wrapping
+d:WrapZExtend     = 1.0 * stlTrans mm          # extra length extending the side walls toward -Z
+d:WrapZExtendHalf = 0.5 * WrapZExtend mm
+
+d:stlGap2Lens         = stlOffset + WrapGap mm
+d:stlTotalTrans       = stlTrans + stlGap2Lens mm
+
+d:ImgSensor2Lens3Distance = 0.0 mm # distance from lens #3 back surface ↔ sensor is about 9.9 mm
+d:LensBarrelLength       = 33.0 mm
+
+# (optional) position/rotation adjustment
+d:Ge/MySTL/TransX     = 0 cm
+d:Ge/MySTL/TransY     = 0 cm
+d:Ge/MySTL/TransZ     = -1.0 * stlTotalTrans  mm
+d:Ge/MySTL/RotX       = 0 deg
+d:Ge/MySTL/RotY       = 180 deg
+d:Ge/MySTL/RotZ       = 0 deg
+
+s:Ge/MySTL/OpticalBehavior = "MySurfaceName"
+s:Su/MySurfaceName/Type = "dielectric_dielectric"
+s:Su/MySurfaceName/Model = "Unified"
+s:Su/MySurfaceName/Finish = "Polished"
+
+# shift phantom and beam position to the left via the reflecting mirror
+d:positionShift       = 25 mm
+d:positionShift2      = positionShift + positionShift mm
+
+############################################
+# 3. Graphics settings – enable OpenGL viewer
+############################################
+i:Ma/Verbosity = 0
+i:Ts/SequenceVerbosity = 0
+i:Ts/NumberOfThreads = 30
+
+
+# SEQUENCE
+b:Ts/PauseBeforeQuit            = "False"
+b:Ts/UseQt                      = "False"
+b:Ts/ShowCPUTime                = "True"
+i:Ts/ShowHistoryCountAtInterval = 100
+
+# VISUALIZATION
+b:Gr/Enable           = "False"
+#b:Gr/Enable           = "True"
+s:Gr/view/Type        = "OpenGl"
+i:Gr/view/WindowSizeX = 600
+i:Gr/view/WindowSizeY = 600
+d:Gr/view/Theta       = 45. deg
+d:Gr/view/Phi         = 45. deg
+
+# PHYSICS LIST
+s:Ph/ListName         = "Optical"
+s:Ph/Optical/Type     = "Geant4_Modular"
+sv:Ph/Optical/Modules = 2 "g4em-standard_opt4" "g4optical"
+
+
+# SOURCE1
+s:So/Example1/Type                     = "Beam"
+s:So/Example1/Component                = "BeamPosition1"
+s:So/Example1/BeamParticle             = "proton"
+d:So/Example1/BeamEnergy               = 100.0 MeV
+u:So/Example1/BeamEnergySpread         = 0.0
+s:So/Example1/BeamPositionDistribution = "Gaussian"
+s:So/Example1/BeamPositionCutoffShape  = "Ellipse"
+s:So/Example1/BeamAngularDistribution  = "None"
+d:So/Example1/BeamPositionSpreadX      = 0.5 cm # distribution (if Gaussian)
+d:So/Example1/BeamPositionSpreadY      = 0.5 cm # distribution (if Gaussian)
+d:So/Example1/BeamPositionCutoffX      = 25.0 mm # 5 sigma
+d:So/Example1/BeamPositionCutoffY      = 25.0 mm
+
+# SOURCE2
+s:So/Example2/Type                     = "Beam"
+s:So/Example2/Component                = "BeamPosition2"
+s:So/Example2/BeamParticle             = "proton"
+d:So/Example2/BeamEnergy               = 100.0 MeV
+u:So/Example2/BeamEnergySpread         = 0.0
+s:So/Example2/BeamPositionDistribution = "Gaussian"
+s:So/Example2/BeamPositionCutoffShape  = "Ellipse"
+s:So/Example2/BeamAngularDistribution  = "None"
+d:So/Example2/BeamPositionSpreadX      = 0.5 cm # distribution (if Gaussian)
+d:So/Example2/BeamPositionSpreadY      = 0.5 cm # distribution (if Gaussian)
+d:So/Example2/BeamPositionCutoffX      = 25.0 mm # 5 sigma
+d:So/Example2/BeamPositionCutoffY      = 25.0 mm
+
+# SOURCE3
+s:So/Example3/Type                     = "Beam"
+s:So/Example3/Component                = "BeamPosition3"
+s:So/Example3/BeamParticle             = "proton"
+d:So/Example3/BeamEnergy               = 100.0 MeV
+u:So/Example3/BeamEnergySpread         = 0.0
+s:So/Example3/BeamPositionDistribution = "Gaussian"
+s:So/Example3/BeamPositionCutoffShape  = "Ellipse"
+s:So/Example3/BeamAngularDistribution  = "None"
+d:So/Example3/BeamPositionSpreadX      = 0.5 cm # distribution (if Gaussian)
+d:So/Example3/BeamPositionSpreadY      = 0.5 cm # distribution (if Gaussian)
+d:So/Example3/BeamPositionCutoffX      = 25.0 mm # 5 sigma
+d:So/Example3/BeamPositionCutoffY      = 25.0 mm
+
+# SOURCE4
+s:So/Example4/Type                     = "Beam"
+s:So/Example4/Component                = "BeamPosition4"
+s:So/Example4/BeamParticle             = "proton"
+d:So/Example4/BeamEnergy               = 100.0 MeV
+u:So/Example4/BeamEnergySpread         = 0.0
+s:So/Example4/BeamPositionDistribution = "Gaussian"
+s:So/Example4/BeamPositionCutoffShape  = "Ellipse"
+s:So/Example4/BeamAngularDistribution  = "None"
+d:So/Example4/BeamPositionSpreadX      = 0.5 cm # distribution (if Gaussian)
+d:So/Example4/BeamPositionSpreadY      = 0.5 cm # distribution (if Gaussian)
+d:So/Example4/BeamPositionCutoffX      = 25.0 mm # 5 sigma
+d:So/Example4/BeamPositionCutoffY      = 25.0 mm
+
+# SOURCE5
+s:So/Example5/Type                     = "Beam"
+s:So/Example5/Component                = "BeamPosition5"
+s:So/Example5/BeamParticle             = "proton"
+d:So/Example5/BeamEnergy               = 100.0 MeV
+u:So/Example5/BeamEnergySpread         = 0.0
+s:So/Example5/BeamPositionDistribution = "Gaussian"
+s:So/Example5/BeamPositionCutoffShape  = "Ellipse"
+s:So/Example5/BeamAngularDistribution  = "None"
+d:So/Example5/BeamPositionSpreadX      = 0.5 cm # distribution (if Gaussian)
+d:So/Example5/BeamPositionSpreadY      = 0.5 cm # distribution (if Gaussian)
+d:So/Example5/BeamPositionCutoffX      = 25.0 mm # 5 sigma
+d:So/Example5/BeamPositionCutoffY      = 25.0 mm
+
+s:Ge/BeamPosition1/Parent="World"
+s:Ge/BeamPosition2/Parent="World"
+s:Ge/BeamPosition3/Parent="World"
+s:Ge/BeamPosition4/Parent="World"
+s:Ge/BeamPosition5/Parent="World"
+s:Ge/BeamPosition1/Type="Group"
+s:Ge/BeamPosition2/Type="Group"
+s:Ge/BeamPosition3/Type="Group"
+s:Ge/BeamPosition4/Type="Group"
+s:Ge/BeamPosition5/Type="Group"
+
+d:Ge/BeamPosition1/TransX = 2.5 cm  # position relative to the world
+d:Ge/BeamPosition1/TransY = 7.5 cm  # position relative to the world
+d:Ge/BeamPosition1/TransZ = 0.0 cm  # position relative to the world
+d:Ge/BeamPosition1/RotX   = 90.0 deg
+d:Ge/BeamPosition1/RotY   = 180.0 deg
+d:Ge/BeamPosition1/RotZ   = 180.0 deg
+
+d:Ge/BeamPosition2/TransX = 1.5 cm  # position relative to the world
+d:Ge/BeamPosition2/TransY = 7.5 cm  # position relative to the world
+d:Ge/BeamPosition2/TransZ = 0.0 cm  # position relative to the world
+d:Ge/BeamPosition2/RotX   = 90.0 deg
+d:Ge/BeamPosition2/RotY   = 180.0 deg
+d:Ge/BeamPosition2/RotZ   = 180.0 deg
+
+d:Ge/BeamPosition3/TransX = 2.5 cm  # position relative to the world
+d:Ge/BeamPosition3/TransY = 7.5 cm  # position relative to the world
+d:Ge/BeamPosition3/TransZ = 0.0 cm  # position relative to the world
+d:Ge/BeamPosition3/RotX   = 90.0 deg
+d:Ge/BeamPosition3/RotY   = 180.0 deg
+d:Ge/BeamPosition3/RotZ   = 180.0 deg
+
+d:Ge/BeamPosition4/TransX = 3.5 cm  # position relative to the world
+d:Ge/BeamPosition4/TransY = 7.5 cm  # position relative to the world
+d:Ge/BeamPosition4/TransZ = 0.0 cm  # position relative to the world
+d:Ge/BeamPosition4/RotX   = 90.0 deg
+d:Ge/BeamPosition4/RotY   = 180.0 deg
+d:Ge/BeamPosition4/RotZ   = 180.0 deg
+
+d:Ge/BeamPosition5/TransX = 4.5 cm  # position relative to the world
+d:Ge/BeamPosition5/TransY = 7.5 cm  # position relative to the world
+d:Ge/BeamPosition5/TransZ = 0.0 cm  # position relative to the world
+d:Ge/BeamPosition5/RotX   = 90.0 deg
+d:Ge/BeamPosition5/RotY   = 180.0 deg
+d:Ge/BeamPosition5/RotZ   = 180.0 deg
+
+i:So/Example1/NumberOfHistoriesInRun   = 100000
+i:So/Example2/NumberOfHistoriesInRun   = 0
+i:So/Example3/NumberOfHistoriesInRun   = 0
+i:So/Example4/NumberOfHistoriesInRun   = 0
+i:So/Example5/NumberOfHistoriesInRun   = 0
+
+
+# GEOMETRY
+d:Ge/World/HLX      = 20 cm
+d:Ge/World/HLY      = 10 cm
+d:Ge/World/HLZ      = 40 cm
+s:Ge/World/Material = "Air"
+
+# Mirrors
+s:Ge/Mirror/Parent          = "World"
+s:Ge/Mirror/Type            = "TsBox"
+s:Ge/Mirror/Material        = "Borosilicate"
+d:Ge/Mirror/HLX             = 3.30 cm
+d:Ge/Mirror/HLY             = 5 cm
+d:Ge/Mirror/HLZ             = 0.5 mm
+d:Ge/Mirror/TransX          = -1.0 * positionShift mm
+d:Ge/Mirror/TransY          = 0 cm
+d:Ge/Mirror/TransZ          = 0 mm
+d:Ge/Mirror/RotX            = 0 deg
+d:Ge/Mirror/RotY            = 45 deg
+d:Ge/Mirror/RotZ            = 0 deg
+s:Ge/Mirror/OpticalBehavior = "surfaceMirror"
+s:Ge/Mirror/DrawingStyle    = "Solid"
+s:Ge/Mirror/Color    = "yellow"
+
+s:Su/SurfaceMirror/Type                   = "dielectric_metal"
+s:Su/SurfaceMirror/Finish                 = "polished"
+s:Su/SurfaceMirror/Model                  = "unified"
+dv:Su/SurfaceMirror/Reflectivity/Energies = 3 1.6 2.9 4.2 eV
+uv:Su/SurfaceMirror/Reflectivity/Values   = 3 0.9 0.9 0.9
+
+# Plastic
+s:Ge/Plastic/Parent   = "World"
+s:Ge/Plastic/Type     = "TsBox"
+s:Ge/Plastic/Material = "Buapfcfm"
+u:Ma/Buapfcfm/BirksConstant = 0.126  # mm/MeV example value
+d:Ge/Plastic/HLX       = 25 mm
+d:Ge/Plastic/HLY       = 50 mm
+d:Ge/Plastic/HLZ       = 25 mm
+d:Ge/Plastic/TransX   = positionShift mm
+d:Ge/Plastic/TransY   = 0 mm
+d:Ge/Plastic/TransZ   = 0 mm
+d:Ge/Plastic/RotX     = 0 deg
+d:Ge/Plastic/RotY     = 0 deg
+d:Ge/Plastic/RotZ     = 0 deg
+s:Ge/Plastic/Color    = "lime"
+s:Ge/Plastic/DrawingStyle = "Solid"
+
+# (removed 2026-06-20) Deleted the same-material child volume "PlasticDose" inside Plastic —
+#   in sim_light it was a dead volume with no scorer/surface attached, and the Buapfcfm/Buapfcfm
+#   same-material boundary artificially inflated optical photon steps by ~52%, slowing down CPU/GPU.
+#   The removal is physics-neutral (6 hires cases: integrated and X/Y/Z/radial distributions all
+#   indistinguishable from an MC seed change).
+#   If dose is needed, score Component="Plastic" directly or use IsParallel="True" instead of a child volume.
+
+# Plastic HLZ + gap (side wall base Z half-length)
+d:WrapSideBaseHLZ = Ge/Plastic/HLZ + WrapGap mm
+
+# Bottom wrapping thickness (half-length)
+d:WrapBottomHLZ   = 5 mm          # bottom plate half-thickness → actual thickness 0.2 mm
+
+# Radius of the central circular hole in the bottom (change as desired)
+d:WrapHoleRadius  = 15 mm           # e.g. a hole of radius 5 mm
+
+# Bottom position on the -Z side where the side walls end (lowest point of the side walls)
+d:WrapBottomBaseZ1 = Ge/Plastic/TransZ - WrapSideBaseHLZ mm
+d:WrapBottomZ      = WrapBottomBaseZ1 - WrapZExtend mm
+# Bottom wrapping center Z = lowest point + bottom HLZ
+d:WrapBottomCenterZ = WrapBottomZ + WrapBottomHLZ mm
+
+# Common wrapping surface definition — rough diffuse reflection (Lambertian diffuse), 50% reflection / 50% absorption
+s:Su/WrapAbsorb/Type        = "dielectric_metal"
+s:Su/WrapAbsorb/Model       = "Unified"
+s:Su/WrapAbsorb/Finish      = "ground"
+
+dv:Su/WrapAbsorb/Reflectivity/Energies = 2 1.3 4.5 eV
+uv:Su/WrapAbsorb/Reflectivity/Values   = 2 0.50 0.50
+
+# 100% Lambertian diffuse on reflection (all specular components 0)
+dv:Su/WrapAbsorb/SpecularLobeConstant/Energies  = 2 1.3 4.5 eV
+uv:Su/WrapAbsorb/SpecularLobeConstant/Values    = 2 0.0 0.0
+dv:Su/WrapAbsorb/SpecularSpikeConstant/Energies = 2 1.3 4.5 eV
+uv:Su/WrapAbsorb/SpecularSpikeConstant/Values   = 2 0.0 0.0
+dv:Su/WrapAbsorb/BackscatterConstant/Energies   = 2 1.3 4.5 eV
+uv:Su/WrapAbsorb/BackscatterConstant/Values     = 2 0.0 0.0
+
+s:Ge/Wrap_XPlus/OpticalBehavior  = "WrapAbsorb"
+s:Ge/Wrap_XMinus/OpticalBehavior = "WrapAbsorb"
+s:Ge/Wrap_YPlus/OpticalBehavior  = "WrapAbsorb"
+s:Ge/Wrap_YMinus/OpticalBehavior = "WrapAbsorb"
+s:Ge/Wrap_ZPlus/OpticalBehavior  = "WrapAbsorb"
+#s:Ge/Wrap_ZEnd/OpticalBehavior   = "WrapAbsorb"
+
+s:Ge/Wrap_XPlus/Color  = "maroon"
+s:Ge/Wrap_XMinus/Color  = "maroon"
+s:Ge/Wrap_YPlus/Color  = "maroon"
+s:Ge/Wrap_YMinus/Color  = "maroon"
+s:Ge/Wrap_ZPlus/Color  = "maroon"
+s:Ge/Wrap_ZEnd/Color  = "maroon"
+
+# +X side wrapping
+s:Ge/Wrap_XPlus/Parent   = "World"
+s:Ge/Wrap_XPlus/Type     = "TsBox"
+s:Ge/Wrap_XPlus/Material = "BlackAbsorber"
+
+# length correction
+d:Wrap_HLX_total       = Ge/Plastic/HLX + positionShift mm
+d:Wrap_HLY_total       = Ge/Plastic/HLY mm
+
+d:Ge/Wrap_XPlus/HLX    = 5 mm
+d:Ge/Wrap_XPlus/HLY    = Wrap_HLY_total + WrapGap mm
+d:Ge/Wrap_XPlus/HLZ    = WrapSideBaseHLZ + WrapZExtendHalf mm
+
+# center position X: Plastic center + Plastic HLX + gap + wrapping HLX (same as before)
+d:Ge/Wrap_XPlus/BaseTransX1 = 0 mm
+d:Ge/Wrap_XPlus/BaseTransX2 = Ge/Wrap_XPlus/BaseTransX1 + WrapGap mm
+d:Ge/Wrap_XPlus/BaseTransX3 = Ge/Wrap_XPlus/BaseTransX2 + positionShift2 mm
+d:Ge/Wrap_XPlus/TransX      = Ge/Wrap_XPlus/BaseTransX3 + Ge/Wrap_XPlus/HLX mm
+
+d:Ge/Wrap_XPlus/TransY = Ge/Plastic/TransY mm
+# center Z: WrapZExtendHalf below the Plastic center
+d:Ge/Wrap_XPlus/TransZ = Ge/Plastic/TransZ - WrapZExtendHalf mm
+
+d:Ge/Wrap_XPlus/RotX   = 0 deg
+d:Ge/Wrap_XPlus/RotY   = 0 deg
+d:Ge/Wrap_XPlus/RotZ   = 0 deg
+
+# -X side wrapping
+s:Ge/Wrap_XMinus/Parent   = "World"
+s:Ge/Wrap_XMinus/Type     = "TsBox"
+s:Ge/Wrap_XMinus/Material = "BlackAbsorber"
+
+d:Ge/Wrap_XMinus/HLX    = 5 mm
+d:Ge/Wrap_XMinus/HLY    = Wrap_HLY_total + WrapGap mm
+d:Ge/Wrap_XMinus/HLZ    = WrapSideBaseHLZ + WrapZExtendHalf mm
+
+# X position calculation (same logic as before)
+d:Ge/Wrap_XMinus/BaseTransX1 = 0 mm
+d:Ge/Wrap_XMinus/BaseTransX2 = Ge/Wrap_XMinus/BaseTransX1 - WrapGap mm
+d:Ge/Wrap_XMinus/BaseTransX3 = Ge/Wrap_XMinus/BaseTransX2 - positionShift2 mm
+d:Ge/Wrap_XMinus/TransX      = Ge/Wrap_XMinus/BaseTransX3 - Ge/Wrap_XMinus/HLX mm
+
+d:Ge/Wrap_XMinus/TransY = Ge/Plastic/TransY mm
+# only the Z position is lowered
+d:Ge/Wrap_XMinus/TransZ = Ge/Plastic/TransZ - WrapZExtendHalf mm
+
+d:Ge/Wrap_XMinus/RotX   = 0 deg
+d:Ge/Wrap_XMinus/RotY   = 0 deg
+d:Ge/Wrap_XMinus/RotZ   = 0 deg
+
+# +Y side wrapping
+s:Ge/Wrap_YPlus/Parent   = "World"
+s:Ge/Wrap_YPlus/Type     = "TsBox"
+s:Ge/Wrap_YPlus/Material = "BlackAbsorber"
+
+d:Add_thcks_Yp1  = Ge/Wrap_XMinus/HLX + Ge/Wrap_XPlus/HLX mm
+d:Add_thcks_Yp2  = Add_thcks_Yp1 + WrapGap mm
+d:Corr_thcks_Yp1 = WrapZExtendHalf - Ge/Plastic/HLZ mm
+d:Corr_thcks_Yp2 = Corr_thcks_Yp1 - WrapGap mm
+d:Ge/Wrap_YPlus/HLX    = Wrap_HLX_total + Add_thcks_Yp2 mm
+d:Ge/Wrap_YPlus/HLY    = 5 mm
+d:Ge/Wrap_YPlus/HLZ    = WrapSideBaseHLZ + Corr_thcks_Yp2 mm
+
+# Y position (same logic as before)
+d:Corr_trans_Yp1 = Ge/Plastic/HLZ + WrapZExtendHalf mm
+d:Corr_trans_Yp2 = Corr_trans_Yp1 + WrapGap mm
+d:Ge/Wrap_YPlus/BaseTransY1 = Ge/Plastic/TransY + Ge/Plastic/HLY mm
+d:Ge/Wrap_YPlus/BaseTransY2 = Ge/Wrap_YPlus/BaseTransY1 + WrapGap mm
+d:Ge/Wrap_YPlus/TransY      = Ge/Wrap_YPlus/BaseTransY2 + Ge/Wrap_YPlus/HLY mm
+
+# only Z is lowered
+d:Ge/Wrap_YPlus/TransZ = Ge/Plastic/TransZ - Corr_trans_Yp2 mm
+
+d:Ge/Wrap_YPlus/RotX   = 0 deg
+d:Ge/Wrap_YPlus/RotY   = 0 deg
+d:Ge/Wrap_YPlus/RotZ   = 0 deg
+
+# -Y side wrapping
+s:Ge/Wrap_YMinus/Parent   = "World"
+s:Ge/Wrap_YMinus/Type     = "TsBox"
+s:Ge/Wrap_YMinus/Material = "BlackAbsorber"
+
+d:Add_thcks_Ym1 = Ge/Wrap_XMinus/HLX + Ge/Wrap_XPlus/HLX mm
+d:Add_thcks_Ym2 = Add_thcks_Ym1 + WrapGap mm
+d:Ge/Wrap_YMinus/HLX    = Wrap_HLX_total + Add_thcks_Ym2 mm
+d:Ge/Wrap_YMinus/HLY    = 5 mm
+d:Ge/Wrap_YMinus/HLZ    = WrapSideBaseHLZ + WrapZExtendHalf mm
+
+# Y position (same logic as before)
+d:Ge/Wrap_YMinus/BaseTransY1 = Ge/Plastic/TransY - Ge/Plastic/HLY mm
+d:Ge/Wrap_YMinus/BaseTransY2 = Ge/Wrap_YMinus/BaseTransY1 - WrapGap mm
+d:Ge/Wrap_YMinus/TransY      = Ge/Wrap_YMinus/BaseTransY2 - Ge/Wrap_YMinus/HLY mm
+
+# only Z is lowered
+d:Ge/Wrap_YMinus/TransZ = Ge/Plastic/TransZ - WrapZExtendHalf mm
+
+d:Ge/Wrap_YMinus/RotX   = 0 deg
+d:Ge/Wrap_YMinus/RotY   = 0 deg
+d:Ge/Wrap_YMinus/RotZ   = 0 deg
+
+
+# +Z side wrapping (ceiling)
+s:Ge/Wrap_ZPlus/Parent   = "World"
+s:Ge/Wrap_ZPlus/Type     = "TsBox"
+s:Ge/Wrap_ZPlus/Material = "BlackAbsorber"
+
+d:Add_thcks_Zp_to_X1   = Ge/Wrap_XMinus/HLX + Ge/Wrap_XPlus/HLX mm
+d:Add_thcks_Zp_to_Y1   = Ge/Wrap_YMinus/HLY + Ge/Wrap_YPlus/HLY mm
+d:Add_thcks_Zp_to_X2   = Add_thcks_Zp_to_X1 + WrapGap mm
+d:Add_thcks_Zp_to_Y2   = Add_thcks_Zp_to_Y1 + WrapGap mm
+d:Ge/Wrap_ZPlus/HLX    = Wrap_HLX_total + Add_thcks_Zp_to_X2 mm
+d:Ge/Wrap_ZPlus/HLY    = Wrap_HLY_total + Add_thcks_Zp_to_Y2  mm
+d:Ge/Wrap_ZPlus/HLZ    = 5 mm
+
+# center position Z: Plastic center + Plastic HLZ + gap + wrapping HLZ
+d:Ge/Wrap_ZPlus/BaseTransZ1 = Ge/Plastic/TransZ + Ge/Plastic/HLZ mm
+d:Ge/Wrap_ZPlus/BaseTransZ2 = Ge/Wrap_ZPlus/BaseTransZ1 + WrapGap mm
+d:Ge/Wrap_ZPlus/TransZ      = Ge/Wrap_ZPlus/BaseTransZ2 + Ge/Wrap_ZPlus/HLZ mm
+
+d:Ge/Wrap_ZPlus/TransY = Ge/Plastic/TransY mm
+
+d:Ge/Wrap_ZPlus/RotX   = 0 deg
+d:Ge/Wrap_ZPlus/RotY   = 0 deg
+d:Ge/Wrap_ZPlus/RotZ   = 0 deg
+
+
+
+# bottom wrapping plate laid at the -Z end
+s:Ge/Wrap_ZEnd/Parent   = "World"
+s:Ge/Wrap_ZEnd/Type     = "TsBox"
+s:Ge/Wrap_ZEnd/Material = "BlackAbsorber"
+
+# X,Y size: enlarged by Plastic HL + gap so no gap remains
+d:Ge/Wrap_ZEnd/HLX    = Wrap_HLX_total + WrapGap mm
+d:Ge/Wrap_ZEnd/HLY    = Wrap_HLY_total + WrapGap mm
+d:Ge/Wrap_ZEnd/HLZ    = WrapBottomHLZ mm
+
+# position: X,Y same as Plastic, Z the bottom center computed earlier
+d:Ge/Wrap_ZEnd/TransY = Ge/Plastic/TransY mm
+d:Ge/Wrap_ZEnd/TransZ = WrapBottomCenterZ mm
+
+d:Ge/Wrap_ZEnd/RotX   = 0. deg
+d:Ge/Wrap_ZEnd/RotY   = 0. deg
+d:Ge/Wrap_ZEnd/RotZ   = 0. deg
+
+# central circular hole in the bottom wrapping plate
+s:Ge/Wrap_ZEnd/Hole/Parent   = "Wrap_ZEnd"   # parent is the bottom plate above
+s:Ge/Wrap_ZEnd/Hole/Type     = "TsCylinder"
+s:Ge/Wrap_ZEnd/Hole/Material = "Air"        # inside the hole is air
+s:Ge/Wrap_ZEnd/Hole/DrawingStyle = "Wireframe" # "Solid", "Wireframe" or "FullWireFrame".
+# FullWireFrame includes drawing of additional edge lines that Geant4 calls "soft edges"
+# - on many graphics devices WireFrame and FullWireFrame give the same result
+i:Ge/Wrap_ZEnd/Hole/VisSegsPerCircle = 0
+
+s:Ge/Wrap_ZEnd/Hole/Color = "White"   # the hole color is white
+
+d:Ge/Wrap_ZEnd/Hole/RMin = 0. mm
+d:Ge/Wrap_ZEnd/Hole/RMax = WrapHoleRadius mm
+d:Ge/Wrap_ZEnd/Hole/HL   = Ge/Wrap_ZEnd/HLZ mm
+
+# dead center in the bottom plate's local coordinates
+d:Ge/Wrap_ZEnd/Hole/TransX = 0. mm
+d:Ge/Wrap_ZEnd/Hole/TransY = 0. mm
+d:Ge/Wrap_ZEnd/Hole/TransZ = 0. mm
+
+d:Ge/Wrap_ZEnd/Hole/RotX = 0. deg
+d:Ge/Wrap_ZEnd/Hole/RotY = 0. deg
+d:Ge/Wrap_ZEnd/Hole/RotZ = 0. deg
+
+# use the full cylinder circumference (complete circle)
+d:Ge/Wrap_ZEnd/Hole/SPhi = 0. deg
+d:Ge/Wrap_ZEnd/Hole/DPhi = 360. deg
+
+
+# strongly absorbing wrapping material
+sv:Ma/BlackAbsorber/Components   = 3 "Carbon" "Hydrogen" "Oxygen"
+uv:Ma/BlackAbsorber/Fractions    = 3  0.599848  0.080538  0.319614
+d:Ma/BlackAbsorber/Density      = 1.190 g/cm3
+s:Ma/BlackAbsorber/DefaultColor = "lightblue"
+
+#b:Ma/BlackAbsorber/EnableOpticalProperties = "False"
+
+# refractive index: roughly like PMMA (around 1.5)
+dv:Ma/BlackAbsorber/RIndex/Energies = 2 1.6 4.2 eV
+uv:Ma/BlackAbsorber/RIndex/Values   = 2 1.50 1.50
+
+# absorption length: very short at 0.1 mm (→ disappears as soon as it enters)
+#dv:Ma/BlackAbsorber/AbsLength/Energies = 2 1.4 4.2 eV
+#dv:Ma/BlackAbsorber/AbsLength/Values   = 2 0.1 0.1 mm
+
+############################################################
+# Imaging Sensor (2/3" CMOS, Sony-class approximation) + Photon Count
+############################################################
+
+# reference distance for the sensor front/back position (-Z direction from the Plastic center)
+d:ImgSensor2Lens1Distance = ImgSensor2Lens3Distance + LensBarrelLength mm
+d:Sct2ImgSensorDistance0 = ImgSensor2Lens1Distance - Ge/MySTL/TransZ mm
+d:Sct2ImgSensorDistance  = Sct2ImgSensorDistance0 + Ge/Plastic/TransZ mm
+
+# --- Imaging Sensor Module Geometry (2/3" format: 8.8 × 6.6 mm, thickness 0.20 mm) ---
+
+s:Ge/ImagingSensor/Parent   = "World"
+s:Ge/ImagingSensor/Type     = "TsBox"
+s:Ge/ImagingSensor/Material = "Air"
+s:Ge/ImagingSensor/Color    = "red"
+
+d:Ge/ImagingSensor/HLX = 3.672 mm
+d:Ge/ImagingSensor/HLY = 2.808 mm
+d:Ge/ImagingSensor/HLZ = 5.0 mm
+
+d:Ge/ImagingSensor/TransY = Ge/Plastic/TransY mm
+d:GapTransScore = Ge/ImagingSensor/HLZ + Sct2ImgSensorDistance mm
+d:imgTransZ = Ge/Plastic/TransZ - GapTransScore mm
+d:imgShiftToZ = 5.0 mm
+d:Ge/ImagingSensor/TransZ = imgTransZ - imgShiftToZ mm
+
+############################################################
+# CPU Fluence Scorer (optical photon filter)
+############################################################
+
+s:Sc/SensorPhoton/Quantity    = "Fluence"
+s:Sc/SensorPhoton/Component   = "ImagingSensor"
+sv:Sc/SensorPhoton/OnlyIncludeParticlesNamed = 1 "opticalphoton"
+
+i:Sc/SensorPhoton/XBins = 1
+i:Sc/SensorPhoton/YBins = 1
+i:Sc/SensorPhoton/ZBins = 50
+
+b:Sc/SensorPhoton/OutputToConsole           = "False"
+s:Sc/SensorPhoton/OutputType                = "csv"
+s:Sc/SensorPhoton/OutputFile                = "../results/SensorDepth_CPU"
+s:Sc/SensorPhoton/IfOutputFileAlreadyExists = "Overwrite"

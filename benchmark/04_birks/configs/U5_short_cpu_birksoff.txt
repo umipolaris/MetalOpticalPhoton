@@ -1,0 +1,8 @@
+# U5 short geometry — Birks OFF (BirksConstant = 0) for Q(T) reference (CPU)
+includeFile = U5_short_cpu.txt
+u:Ma/Buapfcfm/BirksConstant = 0.0
+i:Ts/NumberOfThreads = 30  # 2026-05-15: user request — CPU-only .txt thread 30 (was 10)
+s:Sc/U5short_Fluence/OutputFile = "../results/U5short_CPU_fluence_birksoff"
+s:Sc/U5short_Edep/OutputFile = "../results/U5short_CPU_edep_birksoff"
+s:Sc/U5short_Fluence_Z/OutputFile = "../results/U5short_CPU_fluence_z_birksoff"
+s:Sc/U5short_Fluence_X/OutputFile = "../results/U5short_CPU_fluence_x_birksoff"

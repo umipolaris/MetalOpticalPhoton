@@ -1,0 +1,40 @@
+includeFile = dispersion_base.txt
+sv:Ph/Optical/Modules = 2 "g4em-standard_opt4" "gpuoptical"
+i:Ph/Default/GPUOptical/LogLevel = 0
+i:Ts/NumberOfThreads = 1
+
+# Shrink ScorePlane Z (same as CPU profile)
+d:Ge/ScorePlane/HLZ = 175 mm
+d:Ge/ScorePlane/TransZ = 50 mm
+
+# === GPU BEAM kernel mode (bypass host TOPAS BeamGen, GPU generates photons directly) ===
+i:So/Beam/NumberOfHistoriesInRun = 1   # trigger 1 G4 event
+d:So/Beam/BeamEnergy = 2.4 eV          # to keep host So/Beam valid (GPU kernel uses its own)
+i:Ph/Default/GPUOptical/BeamPhotons = 5000000
+d:Ph/Default/GPUOptical/BeamCenterX = 10 mm
+d:Ph/Default/GPUOptical/BeamCenterY = 0 mm
+d:Ph/Default/GPUOptical/BeamCenterZ = -75 mm
+u:Ph/Default/GPUOptical/BeamDirX = 0
+u:Ph/Default/GPUOptical/BeamDirY = 0
+u:Ph/Default/GPUOptical/BeamDirZ = 1
+d:Ph/Default/GPUOptical/BeamEnergy = 2.4 eV
+# Continuous spectrum (GPU kernel piecewise linear inverse CDF)
+s:Ph/Default/GPUOptical/BeamEnergySpectrumType = "Continuous"
+dv:Ph/Default/GPUOptical/BeamEnergySpectrumValues  = 2 1.65 3.10 eV
+uv:Ph/Default/GPUOptical/BeamEnergySpectrumWeights = 2 1.0 1.0
+# position spread (dispersion_base BeamPositionCutoffX=1.0, Y=0.001 — rectangle)
+d:Ph/Default/GPUOptical/BeamPosCutoffX = 1.0 mm
+d:Ph/Default/GPUOptical/BeamPosCutoffY = 0.001 mm
+
+# Fluence 0.125mm voxel (same binning as CPU profile)
+s:Sc/Prof/Quantity = "GPUOpticalPhotonFluence"
+s:Sc/Prof/Component = "ScorePlane"
+sv:Sc/Prof/OnlyIncludeParticlesNamed = 1 "opticalphoton"
+i:Sc/Prof/XBins = 3200
+i:Sc/Prof/YBins = 1
+i:Sc/Prof/ZBins = 2800
+s:Sc/Prof/OutputType = "csv"
+s:Sc/Prof/OutputFile = "../results/disp_prof_GPU_bk"
+s:Sc/Prof/IfOutputFileAlreadyExists = "Overwrite"
+
+i:Ph/Default/GPUOptical/EventBatchSize = 100000

@@ -1,0 +1,40 @@
+# ============================================================
+# Common shell for phenomenological unit tests U1–U5.
+# Minimal world, no lens, no compound geometry — just the
+# optical phenomenon under study plus a scintillator photon source.
+#
+# 2026-04-29: chain bc408.txt include to avoid TOPAS multi-chain
+# parameter conflict when U test files include both files in parallel.
+# ============================================================
+
+includeFile = ../../common/bc408.txt
+
+b:Ge/CheckForOverlaps       = "True"
+b:Ge/QuitIfOverlapDetected  = "False"
+
+i:Ma/Verbosity              = 0
+i:Ts/SequenceVerbosity      = 0
+i:Ts/NumberOfThreads = 20
+b:Ts/PauseBeforeQuit        = "False"
+b:Ts/UseQt                  = "False"
+b:Ts/ShowCPUTime            = "True"
+b:Ts/QuitIfManyHistoriesSeemAnomalous = "False"
+i:Ts/ShowHistoryCountAtInterval = 100
+
+b:Gr/Enable                 = "False"
+
+s:Ph/ListName               = "Optical"
+s:Ph/Optical/Type           = "Geant4_Modular"
+
+# Air optical properties (must precede World definition)
+b:Ma/Air/EnableOpticalProperties = "True"
+dv:Ma/Air/RIndex/Energies = 3 2.0 3.5 7.14 eV
+uv:Ma/Air/RIndex/Values   = 3 1.0 1.0 1.0
+dv:Ma/Air/AbsLength/Energies = 3 2.0 3.5 7.14 eV
+dv:Ma/Air/AbsLength/Values   = 3 1e6 1e6 1e6 cm
+
+# World
+d:Ge/World/HLX  = 20 cm
+d:Ge/World/HLY  = 20 cm
+d:Ge/World/HLZ  = 40 cm
+s:Ge/World/Material = "Air"

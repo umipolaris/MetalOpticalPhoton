@@ -1,0 +1,186 @@
+# Torus + biconvex lens + camera imaging (CPU-only version)
+#       mirror torus placed at (0,0,0), visible photon beam source added
+
+includeFile = ../../common/OpticalMaterialSample.txt
+
+# === BK7 lens material ===
+sv:Ma/BK7/Components             = 5 "Oxygen" "Silicon" "Boron" "Sodium" "Potassium"
+uv:Ma/BK7/Fractions              = 5 0.539 0.333 0.040 0.070 0.018
+b:Ma/BK7/EnableOpticalProperties = "True"
+d:Ma/BK7/Density                 = 2.51 g/cm3
+d:Ma/BK7/MeanExcitationEnergy    = 85.7 eV
+s:Ma/BK7/DefaultColor            = "yellow"
+dv:Ma/BK7/RIndex/Energies        = 4 1.77 2.25 2.76 3.10 eV
+uv:Ma/BK7/RIndex/Values          = 4 1.513 1.518 1.525 1.531
+dv:Ma/BK7/AbsLength/Energies     = 3 1.77 2.07 2.48 eV
+dv:Ma/BK7/AbsLength/Values       = 3 50 50 50 cm
+
+# === Aluminum (mirror torus) ===
+b:Ma/G4_Al/EnableOpticalProperties = "True"
+dv:Ma/G4_Al/RIndex/Energies = 4 1.77 2.07 2.48 3.10 eV
+uv:Ma/G4_Al/RIndex/Values   = 4 1.99 1.26 0.77 0.40
+dv:Ma/G4_Al/AbsLength/Energies = 4 1.77 2.07 2.48 3.10 eV
+dv:Ma/G4_Al/AbsLength/Values   = 4 50 50 50 50 cm
+
+b:Ge/CheckForOverlaps = "True"
+
+# === STL biconvex lens (existing) ===
+s:Ge/MySTL/Parent     = "World"
+s:Ge/MySTL/Type       = "TsCAD"
+s:Ge/MySTL/FileFormat = "stl"
+s:Ge/MySTL/InputFile  = "simple_biconvex_lens_new"
+d:Ge/MySTL/Units      = 1.0 mm
+s:Ge/MySTL/Material   = "BK7"
+
+d:stlTrans            = 125 mm    # 150 mm closer to torus (lens at z=-150)
+d:stlOffset           = 25.0 mm
+d:WrapGap             = 0.1 mm
+d:stlGap2Lens         = stlOffset + WrapGap mm
+d:stlTotalTrans       = stlTrans + stlGap2Lens mm
+d:ImgSensor2Lens3Distance = 0.0 mm
+d:LensBarrelLength       = 33.0 mm
+
+d:Ge/MySTL/TransX     = 0 cm
+d:Ge/MySTL/TransY     = 0 cm
+d:Ge/MySTL/TransZ     = -1.0 * stlTotalTrans  mm
+d:Ge/MySTL/RotX       = 0 deg
+d:Ge/MySTL/RotY       = 180 deg
+d:Ge/MySTL/RotZ       = 0 deg
+
+s:Ge/MySTL/OpticalBehavior = "MySurfaceName"
+s:Su/MySurfaceName/Type    = "dielectric_dielectric"
+s:Su/MySurfaceName/Model   = "Unified"
+s:Su/MySurfaceName/Finish  = "Polished"
+
+# === System config ===
+i:Ma/Verbosity = 0
+i:Ts/SequenceVerbosity = 0
+i:Ts/NumberOfThreads = 30
+i:Ts/MaxStepNumber = 1000   # matches GPU MaxStepsPerPhoton=1000 (kills torus_diffuse trapped photons early; sensor result unchanged)
+
+b:Ts/PauseBeforeQuit = "False"                # wait to quit until the Qt window is closed
+b:Ts/QuitIfManyHistoriesSeemAnomalous = "False"
+b:Ts/UseQt           = "False"                # enable Qt UI
+b:Ts/ShowCPUTime     = "True"
+i:Ts/ShowHistoryCountAtInterval = 100000     # at 1M, print progress only 10 times
+i:Ts/Seed = 1
+i:Ts/EventVerbosity  = 0
+i:Ts/TrackingVerbosity = 0
+
+# === Qt + OpenGL viewer (GUI visualization) ===
+b:Gr/Enable           = "False"               # enable Graphics
+s:Gr/view/Type        = "OpenGL"
+i:Gr/view/WindowSizeX = 1200
+i:Gr/view/WindowSizeY = 900
+d:Gr/view/Theta       = 60. deg              # view 60 degrees from above
+d:Gr/view/Phi         = 30. deg              # rotation 30 degrees
+b:Gr/view/IncludeAxes = "True"
+d:Gr/view/AxesSize    = 50 mm
+b:Gr/view/IncludeTrajectories = "True"
+b:Gr/view/IncludeGeometry     = "True"
+b:Gr/view/IncludeStepPoints   = "False"
+s:Gr/view/ColorBy             = "ParticleType"
+sv:Gr/view/ColorByParticleTypeNames = 1 "opticalphoton"
+sv:Gr/view/ColorByParticleTypeColors = 1 "yellow"
+
+# === Physics — CPU only (gpuoptical module excluded) ===
+s:Ph/ListName         = "Optical"
+s:Ph/Optical/Type     = "Geant4_Modular"
+sv:Ph/Optical/Modules = 2 "g4em-standard_opt4" "g4optical"
+
+# === Visible light source (visible light = opticalphoton 2.5 eV) ===
+s:So/Light/Type                     = "Beam"
+s:So/Light/Component                = "BeamPos"
+s:So/Light/BeamParticle             = "opticalphoton"
+d:So/Light/BeamEnergy               = 2.5 eV
+u:So/Light/BeamEnergySpread         = 0.0
+s:So/Light/BeamPositionDistribution = "Flat"
+s:So/Light/BeamPositionCutoffShape  = "Rectangle"
+d:So/Light/BeamPositionCutoffX      = 25 mm    # 40 x 40 mm total
+d:So/Light/BeamPositionCutoffY      = 25 mm
+s:So/Light/BeamAngularDistribution  = "Gaussian"
+d:So/Light/BeamAngularSpreadX     = 0.3 rad
+d:So/Light/BeamAngularSpreadY     = 0.3 rad
+d:So/Light/BeamAngularCutoffX     = 0.393 rad   # 22.5° half = 45° cone
+d:So/Light/BeamAngularCutoffY     = 0.393 rad
+i:So/Light/NumberOfHistoriesInRun   = 1000000000   # TOPAS per-source cap = 10^9; CPU 10B = 1e9 × 10 seeds (run_cpu.sh)
+
+
+s:Ge/BeamPos/Parent = "World"
+s:Ge/BeamPos/Type   = "Group"
+d:Ge/BeamPos/TransX = 0 mm
+d:Ge/BeamPos/TransY = 49 mm
+d:Ge/BeamPos/TransZ = 0 mm
+d:Ge/BeamPos/RotX   = -90 deg
+
+
+# === World ===
+d:Ge/World/HLX      = 20 cm
+d:Ge/World/HLY      = 15 cm
+d:Ge/World/HLZ      = 40 cm
+s:Ge/World/Material = "Air"
+
+# === Mirror Torus at (0,0,0), RotX=45° tilted ===
+s:Ge/MirrorTorus/Parent   = "World"
+s:Ge/MirrorTorus/Type     = "G4Torus"
+s:Ge/MirrorTorus/Material = "G4_Al"
+d:Ge/MirrorTorus/RMin     = 0 mm
+d:Ge/MirrorTorus/RMax     = 8 mm
+d:Ge/MirrorTorus/RTor     = 20 mm
+d:Ge/MirrorTorus/SPhi     = 0 deg
+d:Ge/MirrorTorus/DPhi     = 360 deg
+d:Ge/MirrorTorus/RotX     = -45 deg
+s:Ge/MirrorTorus/Color    = "blue"
+
+s:Ge/MirrorTorus/OpticalBehavior         = "MirrorSurface"
+s:Ge/MirrorTorus/OpticalBehaviorTo/World = "MirrorSurface"
+s:Su/MirrorSurface/Type     = "dielectric_metal"
+s:Su/MirrorSurface/Model    = "Unified"
+s:Su/MirrorSurface/Finish   = "ground"                                  # micro-facet for diffuse
+dv:Su/MirrorSurface/Reflectivity/Energies = 3 2.0 3.5 7.14 eV
+uv:Su/MirrorSurface/Reflectivity/Values   = 3 0.95 0.95 0.95
+# Lambertian 30% (specular spike 70%, lobe/backscatter 0)
+dv:Su/MirrorSurface/SpecularLobeConstant/Energies  = 2 1.3 4.5 eV
+uv:Su/MirrorSurface/SpecularLobeConstant/Values    = 2 0.0 0.0
+dv:Su/MirrorSurface/SpecularSpikeConstant/Energies = 2 1.3 4.5 eV
+uv:Su/MirrorSurface/SpecularSpikeConstant/Values   = 2 0.05 0.05
+dv:Su/MirrorSurface/BackscatterConstant/Energies   = 2 1.3 4.5 eV
+uv:Su/MirrorSurface/BackscatterConstant/Values     = 2 0.0 0.0
+
+# === Imaging Sensor (existing position) ===
+d:ImgSensor2Lens1Distance = ImgSensor2Lens3Distance + LensBarrelLength mm
+d:Sct2ImgSensorDistance0  = ImgSensor2Lens1Distance - Ge/MySTL/TransZ mm
+d:DummyOriginZ            = 0 mm
+d:Sct2ImgSensorDistance   = Sct2ImgSensorDistance0 + DummyOriginZ mm
+
+s:Ge/ImagingSensor/Parent   = "World"
+s:Ge/ImagingSensor/Type     = "TsBox"
+s:Ge/ImagingSensor/Material = "Air"
+s:Ge/ImagingSensor/Color    = "red"
+
+d:Ge/ImagingSensor/HLX = 3.672 mm
+d:Ge/ImagingSensor/HLY = 2.808 mm
+d:Ge/ImagingSensor/HLZ = 0.1 mm
+
+d:Ge/ImagingSensor/TransY = 0 mm
+d:GapTransScore  = Ge/ImagingSensor/HLZ + Sct2ImgSensorDistance mm
+d:imgTransZ      = DummyOriginZ - GapTransScore mm
+d:imgShiftToZ    = 10.4 mm    # camera: lens last surface ↔ sensor lens-side face = 10.4 mm
+d:Ge/ImagingSensor/TransZ = imgTransZ - imgShiftToZ mm
+
+# === CPU Fluence Scorer (camera 816×624×50, opticalphoton only) ===
+s:Sc/SensorPhoton/Quantity  = "Fluence"
+s:Sc/SensorPhoton/Component = "ImagingSensor"
+sv:Sc/SensorPhoton/OnlyIncludeParticlesNamed = 1 "opticalphoton"
+
+i:Sc/SensorPhoton/XBins = 816
+i:Sc/SensorPhoton/YBins = 624
+i:Sc/SensorPhoton/ZBins = 1
+
+b:Sc/SensorPhoton/OutputToConsole           = "False"
+s:Sc/SensorPhoton/OutputType                = "csv"
+s:Sc/SensorPhoton/OutputFile = "../results/torus_diffuse_10B_CPU_fresh"
+s:Sc/SensorPhoton/IfOutputFileAlreadyExists = "Overwrite"
+
+
+

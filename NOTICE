@@ -1,0 +1,52 @@
+MetalOpticalPhoton — third-party notices
+=========================================
+
+MetalOpticalPhoton itself is distributed under the MIT License (see LICENSE).
+It is a TOPAS extension and is built against, and distributed for use with,
+the following third-party software, each under its own license. When you
+redistribute MetalOpticalPhoton — including the OpenTOPAS source patches in
+topas_patches/ — the notices below must be preserved.
+
+
+Geant4
+------
+This product includes software developed by Members of the Geant4
+Collaboration (http://cern.ch/geant4).
+
+Geant4 is distributed under the Geant4 Software License
+(https://geant4.web.cern.ch/download/license). Key conditions that apply to
+any redistribution that includes or builds on Geant4:
+
+  - The Geant4 copyright notice and the Geant4 license conditions must be
+    reproduced in the software, its user documentation, and accompanying
+    materials.
+  - The acknowledgement above ("This product includes software developed by
+    Members of the Geant4 Collaboration ...") must be included.
+  - The names "Geant4" and "The Geant4 toolkit" must not be used to endorse or
+    promote derived products without prior written permission. This software
+    is a distinctly named, modified configuration (MetalOpticalPhoton) and
+    does not represent the Geant4 Collaboration.
+
+
+OpenTOPAS (and TOPAS)
+---------------------
+OpenTOPAS (https://github.com/OpenTOPAS/OpenTOPAS) is distributed under the MIT
+License, Copyright (c) the OpenTOPAS authors. The files under topas_patches/
+are modifications to OpenTOPAS source files (TsBox.cc, TsCylinder.cc,
+TsSphere.cc, TsVGenerator.cc) and remain under the OpenTOPAS MIT License; the
+OpenTOPAS copyright and MIT license notice must be retained when they are
+applied or redistributed.
+
+
+Citation
+--------
+Work that uses MetalOpticalPhoton should cite Geant4 and TOPAS/OpenTOPAS in
+addition to this work:
+
+  - S. Agostinelli et al., "Geant4 — a simulation toolkit,"
+    Nucl. Instrum. Methods A 506 (2003) 250-303 (and the subsequent Geant4
+    collaboration papers as requested at https://geant4.web.cern.ch).
+  - J. Perl et al., "TOPAS: An innovative proton Monte Carlo platform ...,"
+    Med. Phys. 39 (2012) 6818-6837.
+  - B. Faddegon et al., "The TOPAS tool for particle simulation ...,"
+    Phys. Med. 72 (2020) 114-121.

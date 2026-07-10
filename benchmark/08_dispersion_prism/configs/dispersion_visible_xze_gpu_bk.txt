@@ -1,0 +1,37 @@
+includeFile = dispersion_base.txt
+sv:Ph/Optical/Modules = 2 "g4em-standard_opt4" "gpuoptical"
+i:Ph/Default/GPUOptical/LogLevel = 0
+i:Ts/NumberOfThreads = 1
+
+# === GPU BEAM kernel mode ===
+i:So/Beam/NumberOfHistoriesInRun = 1
+d:So/Beam/BeamEnergy = 2.4 eV
+i:Ph/Default/GPUOptical/BeamPhotons = 5000000
+d:Ph/Default/GPUOptical/BeamCenterX = 10 mm
+d:Ph/Default/GPUOptical/BeamCenterY = 0 mm
+d:Ph/Default/GPUOptical/BeamCenterZ = -75 mm
+u:Ph/Default/GPUOptical/BeamDirX = 0
+u:Ph/Default/GPUOptical/BeamDirY = 0
+u:Ph/Default/GPUOptical/BeamDirZ = 1
+d:Ph/Default/GPUOptical/BeamEnergy = 2.4 eV
+s:Ph/Default/GPUOptical/BeamEnergySpectrumType = "Continuous"
+dv:Ph/Default/GPUOptical/BeamEnergySpectrumValues  = 2 1.65 3.10 eV
+uv:Ph/Default/GPUOptical/BeamEnergySpectrumWeights = 2 1.0 1.0
+d:Ph/Default/GPUOptical/BeamPosCutoffX = 1.0 mm
+d:Ph/Default/GPUOptical/BeamPosCutoffY = 0.001 mm
+
+# GPU voxel fluence + EBins — same approach as CPU XZE
+s:Sc/XZE/Quantity = "GPUOpticalPhotonFluence"
+s:Sc/XZE/Component = "ScorePlane"
+sv:Sc/XZE/OnlyIncludeParticlesNamed = 1 "opticalphoton"
+i:Sc/XZE/XBins = 200
+i:Sc/XZE/YBins = 1
+i:Sc/XZE/ZBins = 1000
+i:Sc/XZE/EBins = 50
+d:Sc/XZE/EBinMin = 1.65 eV
+d:Sc/XZE/EBinMax = 3.10 eV
+s:Sc/XZE/OutputType = "csv"
+s:Sc/XZE/OutputFile = "../results/disp_xze_GPU"
+s:Sc/XZE/IfOutputFileAlreadyExists = "Overwrite"
+
+i:Ph/Default/GPUOptical/EventBatchSize = 100000

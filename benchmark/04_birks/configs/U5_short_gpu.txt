@@ -1,0 +1,76 @@
+# U5 short geometry (GPU mode) — standalone single-scorer (single-scorer rule, 2026-05-02).
+# Equivalent to the CPU side's 3 separate scorers: the plot script reconstructs the
+# Z/X profiles + cube full sum via 3D voxel projection. 100×50×300 voxel (dx=0.5mm, dy=1mm, dz=0.5mm).
+
+includeFile = ../../common/unit_test_shell.txt
+sv:Ph/Optical/Modules = 2 "g4em-standard_opt4" "gpuoptical"
+i:Ts/NumberOfThreads = 20
+i:Ph/Default/GPUOptical/LogLevel = 0
+
+# Override world to fit shorter Sci
+d:Ge/World/HLZ  = 20 cm
+
+# Scintillator (BC408): z ∈ [-75, +75]
+s:Ge/Sci/Parent   = "World"
+s:Ge/Sci/Type     = "TsBox"
+s:Ge/Sci/Material = "Buapfcfm"
+d:Ge/Sci/HLX      = 25 mm
+d:Ge/Sci/HLY      = 25 mm
+d:Ge/Sci/HLZ      = 75 mm
+d:Ge/Sci/TransZ   = 0 mm
+s:Ge/Sci/Color    = "lime"
+
+# Single 3D voxel ScoreBox — covers full Sci cube
+s:Ge/ScoreBox/Parent = "World"
+s:Ge/ScoreBox/Type   = "TsBox"
+b:Ge/ScoreBox/IsParallel = "True"
+d:Ge/ScoreBox/HLX = 25 mm
+d:Ge/ScoreBox/HLY = 25 mm
+d:Ge/ScoreBox/HLZ = 75 mm
+d:Ge/ScoreBox/TransZ = 0 mm
+
+# Proton beam — entry at z = -75, energy 100 MeV
+s:So/Beam/Type                     = "Beam"
+s:So/Beam/Component                = "BeamPos"
+s:So/Beam/BeamParticle             = "proton"
+d:So/Beam/BeamEnergy               = 100.0 MeV
+u:So/Beam/BeamEnergySpread         = 0.0
+s:So/Beam/BeamPositionDistribution = "Gaussian"
+s:So/Beam/BeamPositionCutoffShape  = "Ellipse"
+d:So/Beam/BeamPositionSpreadX      = 1.0 mm
+d:So/Beam/BeamPositionSpreadY      = 1.0 mm
+d:So/Beam/BeamPositionCutoffX      = 5.0 mm
+d:So/Beam/BeamPositionCutoffY      = 5.0 mm
+s:So/Beam/BeamAngularDistribution  = "None"
+i:So/Beam/NumberOfHistoriesInRun   = 2500
+
+s:Ge/BeamPos/Parent = "World"
+s:Ge/BeamPos/Type   = "Group"
+d:Ge/BeamPos/TransX = 0 mm
+d:Ge/BeamPos/TransY = 0 mm
+d:Ge/BeamPos/TransZ = -100 mm
+
+i:Ts/Seed = 42
+
+# Single GPU optical fluence scorer (3D voxel, single-scorer rule)
+s:Sc/U5short_Fluence/Quantity                       = "GPUOpticalPhotonFluence"
+s:Sc/U5short_Fluence/Component                      = "ScoreBox"
+i:Sc/U5short_Fluence/XBins = 100
+i:Sc/U5short_Fluence/YBins = 50
+i:Sc/U5short_Fluence/ZBins = 300
+sv:Sc/U5short_Fluence/OnlyIncludeParticlesNamed     = 1 "opticalphoton"
+b:Sc/U5short_Fluence/OutputToConsole                = "False"
+s:Sc/U5short_Fluence/OutputType                     = "csv"
+s:Sc/U5short_Fluence/OutputFile                     = "../results/U5short_GPU_fluence"
+s:Sc/U5short_Fluence/IfOutputFileAlreadyExists      = "Overwrite"
+
+# Energy deposit on mass-world Sci (proton dE/dz)
+s:Sc/U5short_Edep/Quantity  = "EnergyDeposit"
+s:Sc/U5short_Edep/Component = "Sci"
+i:Sc/U5short_Edep/XBins = 1
+i:Sc/U5short_Edep/YBins = 1
+i:Sc/U5short_Edep/ZBins = 200
+b:Sc/U5short_Edep/OutputToConsole           = "False"
+s:Sc/U5short_Edep/OutputType                = "csv"
+s:Sc/U5short_Edep/OutputFile                = "../results/U5short_GPU_edep"
+s:Sc/U5short_Edep/IfOutputFileAlreadyExists = "Overwrite"

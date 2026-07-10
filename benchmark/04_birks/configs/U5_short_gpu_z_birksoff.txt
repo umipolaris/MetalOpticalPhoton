@@ -1,0 +1,3 @@
+includeFile = U5_short_gpu_z.txt
+u:Ma/Buapfcfm/BirksConstant = 0.0
+s:Sc/U5short_Fluence_Z/OutputFile = "../results/U5short_GPU_fluence_z_birksoff"

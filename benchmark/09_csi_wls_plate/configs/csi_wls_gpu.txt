@@ -1,0 +1,226 @@
+# CsI(Tl) + reflector on the 5 side/back faces only (X±/Y±/Z−); plate-facing (Z+20) is open -> photons reach the plate WLS + side light collection
+sv:Ph/Optical/Modules = 2 "g4em-standard_opt4" "gpuoptical"
+i:Ph/Default/GPUOptical/LogLevel = 0
+s:Ph/ListName = "Optical"
+s:Ph/Optical/Type = "Geant4_Modular"
+i:Ts/NumberOfThreads = 1
+i:Ts/Seed = 42
+b:Ts/PauseBeforeQuit = "False"
+b:Ts/UseQt = "False"
+b:Gr/Enable = "False"
+b:Ts/QuitIfManyHistoriesSeemAnomalous = "False"
+i:Ma/Verbosity = 0
+i:Ts/SequenceVerbosity = 0
+i:Ts/ShowHistoryCountAtInterval = 100000000
+
+# Air
+b:Ma/Air/EnableOpticalProperties = "True"
+dv:Ma/Air/RIndex/Energies = 2 1.5 3.5 eV
+uv:Ma/Air/RIndex/Values = 2 1.0 1.0
+dv:Ma/Air/AbsLength/Energies = 2 1.5 3.5 eV
+dv:Ma/Air/AbsLength/Values = 2 1e6 1e6 m
+
+# World
+d:Ge/World/HLX = 50 mm
+d:Ge/World/HLY = 50 mm
+d:Ge/World/HLZ = 80 mm
+s:Ge/World/Material = "Air"
+
+# Elements
+s:El/Cesium/Symbol = "Cs"
+s:El/Iodine/Symbol = "I"
+
+# CsI(Tl)
+sv:Ma/CsI/Components = 2 "Cesium" "Iodine"
+uv:Ma/CsI/Fractions = 2 0.5115 0.4885
+d:Ma/CsI/Density = 4.51 g/cm3
+d:Ma/CsI/MeanExcitationEnergy = 553 eV
+b:Ma/CsI/EnableOpticalProperties = "True"
+d:Ma/CsI/ScintillationYield = 100 /MeV
+u:Ma/CsI/ResolutionScale = 1.0
+d:Ma/CsI/ScintillationTimeConstant1 = 1000 ns
+u:Ma/CsI/BirksConstant = 0.0032
+dv:Ma/CsI/RIndex/Energies = 2 1.5 3.5 eV
+uv:Ma/CsI/RIndex/Values = 2 1.79 1.79
+dv:Ma/CsI/AbsLength/Energies = 2 1.5 3.5 eV
+dv:Ma/CsI/AbsLength/Values = 2 50 50 cm
+dv:Ma/CsI/ScintillationComponent1/Energies = 3 2.0 2.25 2.5 eV
+uv:Ma/CsI/ScintillationComponent1/Values = 3 0.3 1.0 0.3
+
+# WLS plate
+sv:Ma/WLSplate/Components = 2 "Carbon" "Hydrogen"
+uv:Ma/WLSplate/Fractions = 2 0.92 0.08
+d:Ma/WLSplate/Density = 1.2 g/cm3
+b:Ma/WLSplate/EnableOpticalProperties = "True"
+dv:Ma/WLSplate/RIndex/Energies = 2 1.5 3.5 eV
+uv:Ma/WLSplate/RIndex/Values = 2 1.5 1.5
+dv:Ma/WLSplate/AbsLength/Energies = 2 1.5 3.5 eV
+dv:Ma/WLSplate/AbsLength/Values = 2 1e6 1e6 m
+dv:Ma/WLSplate/WLSABSLENGTH/Energies = 4 1.5 2.1 2.25 2.5 eV
+dv:Ma/WLSplate/WLSABSLENGTH/Values = 4 1e8 1e8 2.0 2.0 mm
+dv:Ma/WLSplate/WLSCOMPONENT/Energies = 3 1.9 2.07 2.2 eV
+uv:Ma/WLSplate/WLSCOMPONENT/Values = 3 0.3 1.0 0.3
+d:Ma/WLSplate/WLSTIMECONSTANT = 5 ns
+
+# CsI box — skin reflector removed (replaced by side/back slabs)
+s:Ge/CsIbox/Parent = "World"
+s:Ge/CsIbox/Type = "TsBox"
+s:Ge/CsIbox/Material = "CsI"
+d:Ge/CsIbox/HLX = 10 mm
+d:Ge/CsIbox/HLY = 10 mm
+d:Ge/CsIbox/HLZ = 20 mm
+
+# Reflector surface (dielectric_metal 0.95)
+s:Su/CsIreflector/Type = "dielectric_metal"
+s:Su/CsIreflector/Finish = "polished"
+s:Su/CsIreflector/Model = "unified"
+dv:Su/CsIreflector/Reflectivity/Energies = 2 1.5 3.5 eV
+uv:Su/CsIreflector/Reflectivity/Values = 2 0.95 0.95
+
+# Reflector slabs — CsI 5 faces (X±/Y±/Z−); Z+20 (plate side) is open
+s:Ge/RefXp/Parent = "World"
+s:Ge/RefXp/Type = "TsBox"
+s:Ge/RefXp/Material = "Air"
+d:Ge/RefXp/HLX = 0.05 mm
+d:Ge/RefXp/HLY = 10.1 mm
+d:Ge/RefXp/HLZ = 20.1 mm
+d:Ge/RefXp/TransX = 10.05 mm
+s:Ge/RefXp/OpticalBehavior = "CsIreflector"
+
+s:Ge/RefXm/Parent = "World"
+s:Ge/RefXm/Type = "TsBox"
+s:Ge/RefXm/Material = "Air"
+d:Ge/RefXm/HLX = 0.05 mm
+d:Ge/RefXm/HLY = 10.1 mm
+d:Ge/RefXm/HLZ = 20.1 mm
+d:Ge/RefXm/TransX = -10.05 mm
+s:Ge/RefXm/OpticalBehavior = "CsIreflector"
+
+s:Ge/RefYp/Parent = "World"
+s:Ge/RefYp/Type = "TsBox"
+s:Ge/RefYp/Material = "Air"
+d:Ge/RefYp/HLX = 10 mm
+d:Ge/RefYp/HLY = 0.05 mm
+d:Ge/RefYp/HLZ = 20.1 mm
+d:Ge/RefYp/TransY = 10.05 mm
+s:Ge/RefYp/OpticalBehavior = "CsIreflector"
+
+s:Ge/RefYm/Parent = "World"
+s:Ge/RefYm/Type = "TsBox"
+s:Ge/RefYm/Material = "Air"
+d:Ge/RefYm/HLX = 10 mm
+d:Ge/RefYm/HLY = 0.05 mm
+d:Ge/RefYm/HLZ = 20.1 mm
+d:Ge/RefYm/TransY = -10.05 mm
+s:Ge/RefYm/OpticalBehavior = "CsIreflector"
+
+s:Ge/RefZm/Parent = "World"
+s:Ge/RefZm/Type = "TsBox"
+s:Ge/RefZm/Material = "Air"
+d:Ge/RefZm/HLX = 10 mm
+d:Ge/RefZm/HLY = 10 mm
+d:Ge/RefZm/HLZ = 0.05 mm
+d:Ge/RefZm/TransZ = -20.05 mm
+s:Ge/RefZm/OpticalBehavior = "CsIreflector"
+
+# WLS plate side reflectors (X±/Y±) — block stray light from plate back-side re-emission.
+# plate z=20~25. To avoid overlap with the CsI reflector (z<=20.1), use z=20.1~25.0.
+s:Ge/PlateRefXp/Parent = "World"
+s:Ge/PlateRefXp/Type = "TsBox"
+s:Ge/PlateRefXp/Material = "Air"
+d:Ge/PlateRefXp/HLX = 0.05 mm
+d:Ge/PlateRefXp/HLY = 10.1 mm
+d:Ge/PlateRefXp/HLZ = 2.45 mm
+d:Ge/PlateRefXp/TransX = 10.05 mm
+d:Ge/PlateRefXp/TransZ = 22.55 mm
+s:Ge/PlateRefXp/OpticalBehavior = "CsIreflector"
+
+s:Ge/PlateRefXm/Parent = "World"
+s:Ge/PlateRefXm/Type = "TsBox"
+s:Ge/PlateRefXm/Material = "Air"
+d:Ge/PlateRefXm/HLX = 0.05 mm
+d:Ge/PlateRefXm/HLY = 10.1 mm
+d:Ge/PlateRefXm/HLZ = 2.45 mm
+d:Ge/PlateRefXm/TransX = -10.05 mm
+d:Ge/PlateRefXm/TransZ = 22.55 mm
+s:Ge/PlateRefXm/OpticalBehavior = "CsIreflector"
+
+s:Ge/PlateRefYp/Parent = "World"
+s:Ge/PlateRefYp/Type = "TsBox"
+s:Ge/PlateRefYp/Material = "Air"
+d:Ge/PlateRefYp/HLX = 10 mm
+d:Ge/PlateRefYp/HLY = 0.05 mm
+d:Ge/PlateRefYp/HLZ = 2.45 mm
+d:Ge/PlateRefYp/TransY = 10.05 mm
+d:Ge/PlateRefYp/TransZ = 22.55 mm
+s:Ge/PlateRefYp/OpticalBehavior = "CsIreflector"
+
+s:Ge/PlateRefYm/Parent = "World"
+s:Ge/PlateRefYm/Type = "TsBox"
+s:Ge/PlateRefYm/Material = "Air"
+d:Ge/PlateRefYm/HLX = 10 mm
+d:Ge/PlateRefYm/HLY = 0.05 mm
+d:Ge/PlateRefYm/HLZ = 2.45 mm
+d:Ge/PlateRefYm/TransY = -10.05 mm
+d:Ge/PlateRefYm/TransZ = 22.55 mm
+s:Ge/PlateRefYm/OpticalBehavior = "CsIreflector"
+
+# WLS plate (Z+20~25, CsI end face — no reflector -> photons pass through)
+s:Ge/WLSplateGeo/Parent = "World"
+s:Ge/WLSplateGeo/Type = "TsBox"
+s:Ge/WLSplateGeo/Material = "WLSplate"
+d:Ge/WLSplateGeo/HLX = 10 mm
+d:Ge/WLSplateGeo/HLY = 10 mm
+d:Ge/WLSplateGeo/HLZ = 2.5 mm
+d:Ge/WLSplateGeo/TransZ = 22.5 mm
+
+# proton spot beam
+s:So/Beam/Type = "Beam"
+s:So/Beam/Component = "BeamPos"
+s:So/Beam/BeamParticle = "proton"
+d:So/Beam/BeamEnergy = 100 MeV
+u:So/Beam/BeamEnergySpread = 0.0
+s:So/Beam/BeamPositionDistribution = "Gaussian"
+s:So/Beam/BeamPositionCutoffShape = "Ellipse"
+d:So/Beam/BeamPositionSpreadX = 1 mm
+d:So/Beam/BeamPositionSpreadY = 1 mm
+d:So/Beam/BeamPositionCutoffX = 3 mm
+d:So/Beam/BeamPositionCutoffY = 3 mm
+s:So/Beam/BeamAngularDistribution = "None"
+i:So/Beam/NumberOfHistoriesInRun = 10000
+
+s:Ge/BeamPos/Parent = "World"
+s:Ge/BeamPos/Type = "Group"
+d:Ge/BeamPos/TransZ = -50 mm
+
+# scorer (parallel, GPU optical) — OutputFile csi_wls_GPU (reused by plot)
+s:Ge/ScoreBox/Parent = "World"
+s:Ge/ScoreBox/Type = "TsBox"
+b:Ge/ScoreBox/IsParallel = "True"
+d:Ge/ScoreBox/HLX = 40 mm
+d:Ge/ScoreBox/HLY = 40 mm
+d:Ge/ScoreBox/HLZ = 72.5 mm
+d:Ge/ScoreBox/TransZ = 2.5 mm
+s:Sc/PS/Quantity = "GPUOpticalPhotonFluence"
+s:Sc/PS/Component = "ScoreBox"
+sv:Sc/PS/OnlyIncludeParticlesNamed = 1 "opticalphoton"
+i:Sc/PS/XBins = 80
+i:Sc/PS/YBins = 1
+i:Sc/PS/ZBins = 145
+i:Sc/PS/EBins = 50
+d:Sc/PS/EBinMin = 1.5 eV
+d:Sc/PS/EBinMax = 3.5 eV
+s:Sc/PS/OutputType = "csv"
+s:Sc/PS/OutputFile = "../results/csi_wls_GPU"
+s:Sc/PS/IfOutputFileAlreadyExists = "Overwrite"
+i:Ph/Default/GPUOptical/EventBatchSize = 100000
+
+# Dose scorer
+s:Sc/Dose/Quantity = "DoseToMedium"
+s:Sc/Dose/Component = "CsIbox"
+i:Sc/Dose/XBins = 50
+i:Sc/Dose/YBins = 1
+i:Sc/Dose/ZBins = 80
+s:Sc/Dose/OutputType = "csv"
+s:Sc/Dose/OutputFile = "../results/csi_wls_dose"
+s:Sc/Dose/IfOutputFileAlreadyExists = "Overwrite"
