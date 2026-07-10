@@ -128,6 +128,9 @@ begin_row() { # NUM NAME STAGE
 
 run_cfg() { ( cd "$1" && G4TRACE_DIR=OFF "$TOPAS" "$2" ) > "$3" 2>&1; }
 make_cfg() { local src="$1" dst="$2"; shift 2; sed "$@" "$src" > "$dst"; }
+# ensure an override exists even when the source config inherits the parameter
+# via includeFile (sed no-op there); in TOPAS the including file's definition wins.
+force_param() { grep -qE "$2" "$1" || printf '%s\n' "$3" >> "$1"; }
 
 # fig_stage NUM NAME DIR PLOTCMD PNG...
 # Backs up committed reference PNGs, runs the plot script, verifies the PNGs
@@ -370,6 +373,9 @@ case "$NB-$DEV" in
     make_cfg "$d/$cfg.txt" "$d/_smoke.txt" \
       -e "s|^i:So/Beam/NumberOfHistoriesInRun.*|i:So/Beam/NumberOfHistoriesInRun   = $NN|" \
       -e "s|^i:Ts/NumberOfThreads.*|i:Ts/NumberOfThreads = 1|"
+    # *_birksoff variants inherit these via includeFile — append overrides
+    force_param "$d/_smoke.txt" '^i:So/Beam/NumberOfHistoriesInRun' "i:So/Beam/NumberOfHistoriesInRun = $NN"
+    force_param "$d/_smoke.txt" '^i:Ts/NumberOfThreads' "i:Ts/NumberOfThreads = 1"
     run_cfg "$d" _smoke.txt "$LOG.$cfg"; r=$?; [ $r -ne 0 ] && rc=$r
     rm -f "$d/_smoke.txt"
   done
@@ -387,6 +393,9 @@ case "$NB-$DEV" in
     make_cfg "$d/$cfg.txt" "$d/_smoke.txt" \
       -e "s|^i:So/Beam/NumberOfHistoriesInRun.*|i:So/Beam/NumberOfHistoriesInRun   = $NN|" \
       -e "s|^i:Ts/NumberOfThreads.*|i:Ts/NumberOfThreads = $CPU_THREADS|"
+    # U5_short_cpu_birksoff inherits these via includeFile — append overrides
+    force_param "$d/_smoke.txt" '^i:So/Beam/NumberOfHistoriesInRun' "i:So/Beam/NumberOfHistoriesInRun = $NN"
+    force_param "$d/_smoke.txt" '^i:Ts/NumberOfThreads' "i:Ts/NumberOfThreads = $CPU_THREADS"
     run_cfg "$d" _smoke.txt "$LOG.$cfg"; r=$?; [ $r -ne 0 ] && rc=$r
     rm -f "$d/_smoke.txt"
   done
@@ -440,16 +449,29 @@ case "$NB-$DEV" in
     06_mie_diffusion_cyl/results/spread_m30_barrel_CPU.csv 06_mie_diffusion_cyl/results/spread_m30_xy50_CPU.csv
   ;;
 
-07-gpu|07-cpu)
-  d=07_cherenkov_water/configs; NN=$(nn $O07)
-  if [ $DEV = gpu ]; then src=cherenkov_e5_xz_gpu.txt; th=1; mk=require; out=07_cherenkov_water/results/e5_xz_GPU.csv
-  else src=cherenkov_e5_xz_cpu.txt; th=$CPU_THREADS; mk=absent; out=07_cherenkov_water/results/e5_xz_CPU.csv; fi
-  make_cfg "$d/$src" "$d/_smoke.txt" \
+07-gpu)
+  d=07_cherenkov_water/configs; NN=$(ng $O07)
+  rc=0
+  # e5 (electron) + c12_300 (carbon ion — panel (a) of the figure needs its GPU map)
+  for cfg in cherenkov_e5_xz_gpu cherenkov_c12_300_xz_gpu; do
+    make_cfg "$d/$cfg.txt" "$d/_smoke.txt" \
+      -e "s|^i:So/Beam/NumberOfHistoriesInRun.*|i:So/Beam/NumberOfHistoriesInRun = $NN|" \
+      -e "s|^i:Ts/NumberOfThreads.*|i:Ts/NumberOfThreads = $CPU_THREADS|"
+    run_cfg "$d" _smoke.txt "$LOG.$cfg"; r=$?; [ $r -ne 0 ] && rc=$r
+    rm -f "$d/_smoke.txt"
+  done
+  cat "$LOG".cherenkov_* > "$LOG"; rm -f "$LOG".cherenkov_*
+  finish_case "$NB" 07_cherenkov_water gpu "Cherenkov genstep (e⁻ + ¹²C); water absorption spline; TIR air-gap" "$NN e⁻ + $NN C12" \
+    "$LOG" $rc require 07_cherenkov_water/results/e5_xz_GPU.csv 07_cherenkov_water/results/c12_300_xz_GPU.csv
+  ;;
+07-cpu)
+  d=07_cherenkov_water/configs; NN=$(nc $O07)
+  make_cfg "$d/cherenkov_e5_xz_cpu.txt" "$d/_smoke.txt" \
     -e "s|^i:So/Beam/NumberOfHistoriesInRun.*|i:So/Beam/NumberOfHistoriesInRun = $NN|" \
-    -e "s|^i:Ts/NumberOfThreads.*|i:Ts/NumberOfThreads = $th|"
+    -e "s|^i:Ts/NumberOfThreads.*|i:Ts/NumberOfThreads = $CPU_THREADS|"
   run_cfg "$d" _smoke.txt "$LOG"; rc=$?; rm -f "$d/_smoke.txt"
-  finish_case "$NB" 07_cherenkov_water "$DEV" "e⁻ Cherenkov genstep; water absorption spline; TIR air-gap" "$NN e⁻" \
-    "$LOG" $rc $mk "$out"
+  finish_case "$NB" 07_cherenkov_water cpu "e⁻ Cherenkov on g4optical; water absorption spline" "$NN e⁻" \
+    "$LOG" $rc absent 07_cherenkov_water/results/e5_xz_CPU.csv
   ;;
 
 08-gpu)
