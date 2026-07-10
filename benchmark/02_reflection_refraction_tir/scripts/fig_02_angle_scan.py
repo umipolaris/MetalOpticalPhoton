@@ -148,23 +148,21 @@ def plot():
     th_grid = np.linspace(0, 89, 360)
     R_s, T_s, R_p, T_p, _ = fresnel(th_grid, 1.0, 1.5)
 
+    # missing angles/variants load as None → NaN, so a partial scan still plots
+    # (matplotlib skips NaN points; the stats below use nanmax)
+    def _f(rows, key):
+        return np.array([np.nan if r[key] is None else r[key] for r in rows], dtype=float)
+
     th_arr = np.array([r["th"]    for r in u1_s])
     # s-pol arrays
-    Ts_gpu = np.array([r["T_gpu"] for r in u1_s])
-    Ts_cpu = np.array([r["T_cpu"] for r in u1_s])
-    Rs_gpu = np.array([r["R_gpu"] for r in u1_s])
-    Rs_cpu = np.array([r["R_cpu"] for r in u1_s])
+    Ts_gpu = _f(u1_s, "T_gpu"); Ts_cpu = _f(u1_s, "T_cpu")
+    Rs_gpu = _f(u1_s, "R_gpu"); Rs_cpu = _f(u1_s, "R_cpu")
     # p-pol arrays
-    Tp_gpu = np.array([r["T_gpu"] for r in u1_p])
-    Tp_cpu = np.array([r["T_cpu"] for r in u1_p])
-    Rp_gpu = np.array([r["R_gpu"] for r in u1_p])
-    Rp_cpu = np.array([r["R_cpu"] for r in u1_p])
-
+    Tp_gpu = _f(u1_p, "T_gpu"); Tp_cpu = _f(u1_p, "T_cpu")
+    Rp_gpu = _f(u1_p, "R_gpu"); Rp_cpu = _f(u1_p, "R_cpu")
     # unpol arrays (TOPAS default — random pol)
-    Tu_gpu = np.array([r["T_gpu"] for r in u1_u])
-    Tu_cpu = np.array([r["T_cpu"] for r in u1_u])
-    Ru_gpu = np.array([r["R_gpu"] for r in u1_u])
-    Ru_cpu = np.array([r["R_cpu"] for r in u1_u])
+    Tu_gpu = _f(u1_u, "T_gpu"); Tu_cpu = _f(u1_u, "T_cpu")
+    Ru_gpu = _f(u1_u, "R_gpu"); Ru_cpu = _f(u1_u, "R_cpu")
     T_avg = 0.5 * (T_s + T_p)
     R_avg = 0.5 * (R_s + R_p)
 
@@ -216,10 +214,8 @@ def plot():
     theta_c = np.rad2deg(np.arcsin(1.0 / 1.58))
 
     th_u2  = np.array([r["th"]    for r in u2])
-    T_gpu2 = np.array([r["T_gpu"] for r in u2])
-    T_cpu2 = np.array([r["T_cpu"] for r in u2])
-    R_gpu2 = np.array([r["R_gpu"] for r in u2])
-    R_cpu2 = np.array([r["R_cpu"] for r in u2])
+    T_gpu2 = _f(u2, "T_gpu"); T_cpu2 = _f(u2, "T_cpu")
+    R_gpu2 = _f(u2, "R_gpu"); R_cpu2 = _f(u2, "R_cpu")
     TpR_gpu2 = T_gpu2 + R_gpu2
 
     ax_U2.plot(th_grid2, T_s2, color="black", lw=1.4, label=r"Theory $T_s = 1-R_s$")
@@ -253,7 +249,9 @@ def plot():
     # --- B1 validation numbers (12-angle max|Δ|, GPU vs analytic Fresnel / vs CPU Geant4) ---
     Rs_t, Ts_t, Rp_t, Tp_t, _ = fresnel(th_arr, 1.0, 1.5)   # U1: Air → Glass(n=1.5)
     Rs2_t, Ts2_t, _, _, _     = fresnel(th_u2, 1.58, 1.0)   # U2: BC-408(n=1.58) → Air
-    def _mx(a, b): return 100.0 * float(np.max(np.abs(np.asarray(a) - np.asarray(b))))
+    def _mx(a, b):
+        d = np.abs(np.asarray(a, dtype=float) - np.asarray(b, dtype=float))
+        return 100.0 * float(np.nanmax(d)) if not np.all(np.isnan(d)) else float("nan")
     s_fres   = max(_mx(Rs_gpu, Rs_t),  _mx(Ts_gpu, Ts_t))
     p_fres   = max(_mx(Rp_gpu, Rp_t),  _mx(Tp_gpu, Tp_t))
     tir_fres = max(_mx(T_gpu2, Ts2_t), _mx(R_gpu2, Rs2_t))
@@ -261,7 +259,8 @@ def plot():
     p_cpu    = max(_mx(Rp_gpu, Rp_cpu), _mx(Tp_gpu, Tp_cpu))
     tir_cpu  = max(_mx(T_gpu2, T_cpu2), _mx(R_gpu2, R_cpu2))
     above = th_u2 > theta_c
-    leak = 100.0 * float(np.max(np.abs(T_gpu2[above]))) if np.any(above) else 0.0
+    _tab = np.abs(T_gpu2[above])
+    leak = 100.0 * float(np.nanmax(_tab)) if (np.any(above) and not np.all(np.isnan(_tab))) else 0.0
     print("=== B1 validation numbers (12-angle max|Δ|) ===")
     print(f"  U1 R/T vs analytic Fresnel : s-pol {s_fres:.3f} %   p-pol {p_fres:.3f} %                 [paper ≤ 0.29 %]")
     print(f"  U2 TIR vs analytic Fresnel : {tir_fres:.3f} %   (θc={theta_c:.1f}°, GPU leakage above critical angle {leak:.3f} %)   [paper ≤ 0.08 %]")
