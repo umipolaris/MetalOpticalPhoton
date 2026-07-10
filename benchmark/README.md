@@ -11,15 +11,21 @@ the TOPAS `.txt` configs (01 and 05's run scripts symlink the lens `.stl` from c
 ## Installation smoke test
 
 ```bash
-./run_smoke_test.sh                # all 10 benchmarks, GPU + CPU (~10 min; 04-cpu dominates)
-DEVICES=gpu ./run_smoke_test.sh    # GPU only (~2 min)
-ONLY="03 07" SCALE=10 ./run_smoke_test.sh   # subset; SCALE multiplies every event count
+./run_smoke_test.sh                   # all 10 benchmarks, GPU + CPU + figures
+DEVICES=gpu ./run_smoke_test.sh       # GPU only (no figure stage)
+ONLY="03 07" ./run_smoke_test.sh      # subset
+GPU_DIV=100 CPU_DIV=2000 ./run_smoke_test.sh   # even smaller event fractions
 ```
 
-Runs every benchmark once on **drastically reduced event counts** and checks, per run: exit code,
-crash-free log, GPU-engine engagement (`[TsGPU]` marker — and its *absence* on CPU rows), and that
-the expected output CSVs exist with a nonzero sum. Writes a pass/fail HTML report to
-`smoke_logs/smoke_report.html`. This verifies the **installation** end-to-end — not physics
+Runs every benchmark at a reduced fraction of its full event count (GPU 1/`GPU_DIV`, default 1/10;
+CPU 1/`CPU_DIV`, default 1/200) and checks, per run: exit code, crash-free log, GPU-engine
+engagement (`[TsGPU]` marker — and its *absence* on CPU rows), and that the expected output CSVs
+exist with a nonzero sum. When both devices ran, it also executes each benchmark's plot script and
+verifies the figure PNG is actually produced (committed reference figures are restored afterwards;
+the smoke-generated PNGs are kept in `smoke_logs/figs/` and embedded in the report).
+The HTML report (`smoke_logs/smoke_report.html`) **opens in the browser at start and live-updates**
+— every stage is pre-listed as pending and flips to ▶ running → ✓/FAIL as the run progresses
+(`OPEN=0` to disable auto-open). This verifies the **installation** end-to-end — not physics
 statistics; for real numbers use each benchmark's own scripts below.
 
 ## Benchmarks
