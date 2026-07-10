@@ -8,6 +8,20 @@ change edit only `common/topas_env.sh` (or `TOPAS=/path ./run_*.sh`). All runs a
 each benchmark's `results/` (02 keeps its built configs under `results/built/`); `configs/` holds
 the TOPAS `.txt` configs (01 and 05's run scripts symlink the lens `.stl` from common/ at run time; the link is gitignored).
 
+## Installation smoke test
+
+```bash
+./run_smoke_test.sh                # all 10 benchmarks, GPU + CPU (~10 min; 04-cpu dominates)
+DEVICES=gpu ./run_smoke_test.sh    # GPU only (~2 min)
+ONLY="03 07" SCALE=10 ./run_smoke_test.sh   # subset; SCALE multiplies every event count
+```
+
+Runs every benchmark once on **drastically reduced event counts** and checks, per run: exit code,
+crash-free log, GPU-engine engagement (`[TsGPU]` marker — and its *absence* on CPU rows), and that
+the expected output CSVs exist with a nonzero sum. Writes a pass/fail HTML report to
+`smoke_logs/smoke_report.html`. This verifies the **installation** end-to-end — not physics
+statistics; for real numbers use each benchmark's own scripts below.
+
 ## Benchmarks
 
 | # | Directory | Purpose | Key measurement |

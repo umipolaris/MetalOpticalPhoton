@@ -29,3 +29,5 @@
 1*/results/*.pdf
 __pycache__/
 *.pyc
+# run_smoke_test.sh 산출물 (로그 + HTML 리포트)
+smoke_logs/
